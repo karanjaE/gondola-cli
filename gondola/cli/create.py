@@ -1,4 +1,4 @@
-from pathlib import PAth
+from pathlib import Path
 from typing import Optional
 import typer
 from rich.console import Console
@@ -65,7 +65,7 @@ def project(
 
         generator = ProjectGenerator(
             name = name,
-            db_engine = db_engine,
+            db_engine = db,
             include_docker = docker,
             extensions = ext_list,
         )
