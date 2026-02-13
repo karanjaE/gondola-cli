@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Any, Dict
-from jinja2 import Environment, FileSystemLoader, Template
-import os
+from jinja2 import Environment, FileSystemLoader
 
 class BaseGenerator:
     """Base class for generators"""

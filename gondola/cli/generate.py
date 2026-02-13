@@ -31,13 +31,13 @@ def model(
     generator.generate()
     
     console.print(f"[green]✓[/green] Model '{name}' generated successfully!")
-    console.print(f"\n[cyan]Files created:[/cyan]")
+    console.print("\n[cyan]Files created:[/cyan]")
     console.print(f"  - app/models/{generator.file_name}.py")
     console.print(f"  - app/models/serializers/{generator.file_name}_serializer.py")
     console.print(f"  - test/unit/test_{generator.file_name}.py")
-    console.print(f"\n[cyan]Next steps:[/cyan]")
+    console.print("\n[cyan]Next steps:[/cyan]")
     console.print(f"  gondola migrate create 'Create {name} model'")
-    console.print(f"  gondola migrate upgrade")
+    console.print("  gondola migrate upgrade")
 
 
 @app.command()
@@ -55,10 +55,10 @@ def router(
     generator.generate()
     
     console.print(f"[green]✓[/green] Router '{name}' generated successfully!")
-    console.print(f"\n[cyan]Files created:[/cyan]")
+    console.print("\n[cyan]Files created:[/cyan]")
     console.print(f"  - app/routers/{generator.file_name}.py")
     console.print(f"  - test/integration/test_{generator.file_name}_routes.py")
-    console.print(f"\n[yellow]Remember to register the router in main.py[/yellow]")
+    console.print("\n[yellow]Remember to register the router in main.py[/yellow]")
 
 
 @app.command()
@@ -75,7 +75,7 @@ def service(
     generator.generate()
     
     console.print(f"[green]✓[/green] Service '{name}' generated successfully!")
-    console.print(f"\n[cyan]Files created:[/cyan]")
+    console.print("\n[cyan]Files created:[/cyan]")
     console.print(f"  - app/services/{generator.file_name}.py")
     console.print(f"  - test/unit/test_{generator.file_name}.py")
 
@@ -94,6 +94,6 @@ def mailer(
     generator.generate()
     
     console.print(f"[green]✓[/green] Mailer '{name}' generated successfully!")
-    console.print(f"\n[cyan]Files created:[/cyan]")
+    console.print("\n[cyan]Files created:[/cyan]")
     console.print(f"  - app/lib/mailers/{generator.file_name}.py")
     console.print(f"  - test/unit/test_{generator.file_name}.py")

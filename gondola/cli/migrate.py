@@ -38,7 +38,7 @@ def upgrade(
     
     try:
         subprocess.run(["alembic", "upgrade", revision], check=True)
-        console.print(f"[green]✓[/green] Migrations applied successfully")
+        console.print("[green]✓[/green] Migrations applied successfully")
     except subprocess.CalledProcessError as e:
         console.print(f"[red]Error running migrations: {e}[/red]")
         raise typer.Exit(1)
@@ -55,7 +55,7 @@ def downgrade(
     
     try:
         subprocess.run(["alembic", "downgrade", revision], check=True)
-        console.print(f"[green]✓[/green] Migration rolled back successfully")
+        console.print("[green]✓[/green] Migration rolled back successfully")
     except subprocess.CalledProcessError as e:
         console.print(f"[red]Error rolling back migration: {e}[/red]")
         raise typer.Exit(1)
