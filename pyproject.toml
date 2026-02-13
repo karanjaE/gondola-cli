@@ -5,6 +5,7 @@ description = "An awesome cli tool for FastAPI"
 authors = ["karanjaE <rranchow@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+packages = [{include = "gondola"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
