@@ -12,7 +12,7 @@ app = typer.Typer(
 console = Console()
 
 # Subcommands
-from .cli import app as create_app
+from .create import app as create_app
 from .generate import app as generate_app
 from .delete import app as delete_app
 from .migrate import app as migrate_app
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     app()
 
 
-from .cli.main import app
+from .main import app
 
 if __name__ == "__main__":
     app()
