@@ -11,7 +11,7 @@ def to_snake_case(text: str) -> str:
 def to_pascal_case(text: str) -> str:
     """Convert text to PascalCase."""
     # Split by underscore or space
-    words = re.split('[_\s]+', text)
+    words = re.split(r'[_\s]+', text)
     return ''.join(word.capitalize() for word in words)
 
 

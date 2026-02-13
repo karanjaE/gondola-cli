@@ -12,7 +12,7 @@ console = Console()
 
 @app.command()
 def project(
-    name: str = typer.Option(..., help = "Project name"),
+    name: str = typer.Argument(..., help = "Project name"),
     db: str = typer.Option(
         "postgresql",
         "--db",
@@ -72,12 +72,12 @@ def project(
         generator.generate()
 
         console.print(f"\n[green]✓[/green] Project '{name}' created successfully!")
-        console.print(f"\n[cyan]Next steps:[/cyan]")
+        console.print("\n[cyan]Next steps:[/cyan]")
         console.print(f"  cd {name}")
-        console.print(f"  poetry install")
-        console.print(f" cp .env.example .env")
-        console.print(f" # Configure your env file")
-        console.print(f" gondola migarte upgrade")
-        console.print(f" gondola run server")
+        console.print("  poetry install")
+        console.print(" cp .env.example .env")
+        console.print(" # Configure your env file")
+        console.print(" gondola migarte upgrade")
+        console.print(" gondola run server")
 
 

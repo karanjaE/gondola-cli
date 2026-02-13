@@ -5,6 +5,7 @@ description = "An awesome cli tool for FastAPI"
 authors = ["karanjaE <rranchow@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+packages = [{include = "gondola"}]
 
 [tool.poetry.dependencies]
 python = "^3.12"
@@ -24,7 +25,7 @@ mypy = "^1.19.1"
 ruff = "^0.15.0"
 
 [tool.poetry.scripts]
-gondola = "gondola.cli:app"
+gondola = "gondola.cli.main:app"
 
 [tool.mypy]
 python_version = "3.12"

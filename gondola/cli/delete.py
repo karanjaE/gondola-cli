@@ -3,7 +3,7 @@ from pathlib import Path
 from rich.console import Console
 from rich.prompt import Confirm
 
-from ..utils.file_utils import find_migration_for_model, remove_file_safely
+from ..utils.file_utils import find_migration_for_model
 
 app = typer.Typer(help="Delete/rollback generated code")
 console = Console()
@@ -37,24 +37,24 @@ def model(
         raise typer.Exit(0)
     
     # Show files to be deleted
-    console.print(f"\n[yellow]The following files will be deleted:[/yellow]")
+    console.print("\n[yellow]The following files will be deleted:[/yellow]")
     for file in existing_files:
         console.print(f"  - {file}")
     
     # Find related migration
     migration_file = find_migration_for_model(model_name)
     if migration_file:
-        console.print(f"\n[yellow]Related migration found:[/yellow]")
+        console.print("\n[yellow]Related migration found:[/yellow]")
         console.print(f"  - {migration_file}")
-        console.print(f"\n[red]Warning: You'll need to manually rollback this migration[/red]")
+        console.print("\n[red]Warning: You'll need to manually rollback this migration[/red]")
     
     # Check for dependencies
     dependencies = check_model_dependencies(model_name)
     if dependencies:
-        console.print(f"\n[red]Warning: This model is referenced by:[/red]")
+        console.print("\n[red]Warning: This model is referenced by:[/red]")
         for dep in dependencies:
             console.print(f"  - {dep}")
-        console.print(f"\n[yellow]Please remove these dependencies first[/yellow]")
+        console.print("\n[yellow]Please remove these dependencies first[/yellow]")
         raise typer.Exit(1)
     
     # Confirm deletion
@@ -74,8 +74,8 @@ def model(
     console.print(f"\n[green]✓[/green] Model '{name}' deleted successfully!")
     
     if migration_file:
-        console.print(f"\n[cyan]Next steps:[/cyan]")
-        console.print(f"  gondola migrate downgrade -1")
+        console.print("\n[cyan]Next steps:[/cyan]")
+        console.print("  gondola migrate downgrade -1")
 
 def check_model_dependencies(model_name: str) -> list:
     """Check if model is referenced in other models."""
@@ -136,7 +136,7 @@ def router(
         console.print(f"[yellow]No files found for router '{name}'[/yellow]")
         raise typer.Exit(0)
     
-    console.print(f"\n[yellow]The following files will be deleted:[/yellow]")
+    console.print("\n[yellow]The following files will be deleted:[/yellow]")
     for file in existing_files:
         console.print(f"  - {file}")
     
@@ -150,4 +150,4 @@ def router(
         console.print(f"[green]✓[/green] Deleted {file}")
     
     console.print(f"\n[green]✓[/green] Router '{name}' deleted successfully!")
-    console.print(f"\n[yellow]Remember to remove the router from main.py[/yellow]")
+    console.print("\n[yellow]Remember to remove the router from main.py[/yellow]")

@@ -7,7 +7,7 @@ class ModelGenerator(BaseGenerator):
     """Generator for SQLModel models."""
     
     def __init__(self, name: str, fields: str = ""):
-        super().__init__("model")
+        super().__init__("")
         self.name = to_pascal_case(name)
         self.file_name = to_snake_case(name)
         self.fields = self._parse_fields(fields)
@@ -34,15 +34,15 @@ class ModelGenerator(BaseGenerator):
         
         # Generate model
         model_path = Path("app/models") / f"{self.file_name}.py"
-        self.copy_template("app/model.py.jinja", model_path, context)
+        self.copy_template("app/model/model.py.jinja", model_path, context)
         
         # Generate serializer
         serializer_path = Path("app/models/serializers") / f"{self.file_name}_serializer.py"
-        self.copy_template("app/models/serializer.py.jinja", serializer_path, context)
+        self.copy_template("app/model/serializer.py.jinja", serializer_path, context)
         
         # Generate test
         test_path = Path("test/unit") / f"test_{self.file_name}.py"
-        self.copy_template("app/models/model_test.py.jinja", test_path, context)
+        self.copy_template("app/model/model_test.py.jinja", test_path, context)
         
         # Update models __init__.py
         self._update_models_init()
