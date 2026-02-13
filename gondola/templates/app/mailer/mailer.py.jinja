@@ -1,0 +1,47 @@
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import aiosmtplib
+from core.config import settings
+
+class {{ mailer_name }}Mailer:
+    """{{ mailer_name }} mailer."""
+    
+    def __init__(self, to_email: str):
+        self.to_email = to_email
+    
+    async def send(self) -> None:
+        """Send the email."""
+        message = MIMEMultipart("alternative")
+        message["Subject"] = self.subject
+        message["From"] = f"{settings.smtp_from_name} <{settings.smtp_from_email}>"
+        message["To"] = self.to_email
+        
+        # HTML content
+        html_content = self._get_html_content()
+        html_part = MIMEText(html_content, "html")
+        message.attach(html_part)
+        
+        # Send email
+        await aiosmtplib.send(
+            message,
+            hostname=settings.smtp_host,
+            port=settings.smtp_port,
+            username=settings.smtp_username,
+            password=settings.smtp_password,
+        )
+    
+    @property
+    def subject(self) -> str:
+        """Email subject."""
+        return "{{ mailer_name }}"
+    
+    def _get_html_content(self) -> str:
+        """Generate HTML content."""
+        return """
+        <html>
+            <body>
+                <h1>{{ mailer_name }}</h1>
+                <p>Your email content here.</p>
+            </body>
+        </html>
+        """
