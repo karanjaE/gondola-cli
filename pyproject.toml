@@ -25,7 +25,7 @@ mypy = "^1.19.1"
 ruff = "^0.15.0"
 
 [tool.poetry.scripts]
-gondola = "gondola.cli:app"
+gondola = "gondola.cli.main:app"
 
 [tool.mypy]
 python_version = "3.12"
