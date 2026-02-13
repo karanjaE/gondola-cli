@@ -38,11 +38,11 @@ class ModelGenerator(BaseGenerator):
         
         # Generate serializer
         serializer_path = Path("app/models/serializers") / f"{self.file_name}_serializer.py"
-        self.copy_template("app/models/serializers/serializer.py.jinja", serializer_path, context)
+        self.copy_template("app/models/serializer.py.jinja", serializer_path, context)
         
         # Generate test
         test_path = Path("test/unit") / f"test_{self.file_name}.py"
-        self.copy_template("test/model_test.py.jinja", test_path, context)
+        self.copy_template("app/models/model_test.py.jinja", test_path, context)
         
         # Update models __init__.py
         self._update_models_init()
