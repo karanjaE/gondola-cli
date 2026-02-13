@@ -12,7 +12,7 @@ class ProjectGenerator(BaseGenerator):
         include_docker: bool=True,
         extensions: List[str]=None,
     ):
-        super().__init__("project")
+        super().__init__("")
         self.name = name
         self.db_engine = db_engine
         self.include_docker = include_docker
@@ -106,14 +106,14 @@ class ProjectGenerator(BaseGenerator):
 
         # models/base.py
         self.copy_template(
-            "app/models/base.py.jinja",
+            "app/model/base.py.jinja",
             self.project_path/"app"/"models"/"base.py",
             context,
         )
 
         # routers/__init__.py with health check
         self.copy_template(
-            "app/routers/__init__.py.jinja",
+            "app/router/init.py.jinja",
             self.project_path/"app"/"routers"/"__init__.py",
             context,
         )
@@ -194,7 +194,7 @@ class ProjectGenerator(BaseGenerator):
             context,
         )
 
-    def _gemerate_test_files(self, context: dict)-> None:
+    def _generate_test_files(self, context: dict)-> None:
         """Generate test files"""
 
         # test/init_test.py

@@ -12,7 +12,7 @@ console = Console()
 
 @app.command()
 def project(
-    name: str = typer.Option(..., help = "Project name"),
+    name: str = typer.Argument(..., help = "Project name"),
     db: str = typer.Option(
         "postgresql",
         "--db",

@@ -17,7 +17,10 @@ class BaseGenerator:
 
     def render_template(self, template_name: str, context: Dict[str, Any]) -> str:
         """Render a template with the given context"""
-        template_path = f"{self.template_dir}/{template_name}"
+        if self.template_dir:
+            template_path = f"{self.template_dir}/{template_name}"
+        else:
+            template_path = template_name
         template = self.env.get_template(template_path)
         return template.render(**context)
 
