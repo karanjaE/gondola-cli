@@ -100,7 +100,7 @@ class ProjectGenerator(BaseGenerator):
         # main.py
         self.copy_template(
             "app/main.py.jinja",
-            self.project_path/"app"/"main.py",
+            self.project_path/"main.py",
             context,
         )
 
