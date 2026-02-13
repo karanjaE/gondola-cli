@@ -6,7 +6,7 @@ class RouterGenerator(BaseGenerator):
     """Generator for FastAPI routers."""
     
     def __init__(self, name: str, model_name: str = None):
-        super().__init__("router")
+        super().__init__("")
         self.name = to_pascal_case(name)
         self.file_name = to_snake_case(name)
         self.model_name = to_pascal_case(model_name) if model_name else self.name
@@ -23,8 +23,9 @@ class RouterGenerator(BaseGenerator):
         
         # Generate router
         router_path = Path("app/routers") / f"{self.file_name}.py"
-        self.copy_template("router.py.jinja", router_path, context)
+        self.copy_template("app/router/router.py.jinja", router_path, context)
         
         # Generate integration test
         test_path = Path("test/integration") / f"test_{self.file_name}_routes.py"
-        self.copy_template("router_test.py.jinja", test_path, context)
+        test_path.parent.mkdir(parents=True, exist_ok=True)
+        test_path.write_text(f"# Test for {self.name} router\n")

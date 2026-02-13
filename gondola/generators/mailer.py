@@ -6,7 +6,7 @@ class MailerGenerator(BaseGenerator):
     """Generator for mailer classes."""
     
     def __init__(self, name: str):
-        super().__init__("mailer")
+        super().__init__("")
         self.name = to_pascal_case(name)
         self.file_name = to_snake_case(name)
     
@@ -28,4 +28,5 @@ class MailerGenerator(BaseGenerator):
         
         # Generate test
         test_path = Path("test/unit") / f"test_{self.file_name}.py"
-        self.copy_template("mailer_test.py.jinja", test_path, context)
+        test_path.parent.mkdir(parents=True, exist_ok=True)
+        test_path.write_text(f"# Test for {self.name} mailer\n")

@@ -8,7 +8,7 @@ class ServiceGenerator(BaseGenerator):
     """Generator for service classes."""
     
     def __init__(self, name: str):
-        super().__init__("service")
+        super().__init__("")
         self.name = to_pascal_case(name)
         self.file_name = to_snake_case(name)
     
@@ -25,4 +25,5 @@ class ServiceGenerator(BaseGenerator):
         
         # Generate test
         test_path = Path("test/unit") / f"test_{self.file_name}.py"
-        self.copy_template("service_test.py.jinja", test_path, context)
+        test_path.parent.mkdir(parents=True, exist_ok=True)
+        test_path.write_text(f"# Test for {self.name} service\n")
