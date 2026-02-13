@@ -8,7 +8,6 @@ from ..utils.file_utils import find_migration_for_model, remove_file_safely
 app = typer.Typer(help="Delete/rollback generated code")
 console = Console()
 
-
 @app.command()
 def model(
     name: str = typer.Argument(..., help="Model name to delete"),
@@ -78,7 +77,6 @@ def model(
         console.print(f"\n[cyan]Next steps:[/cyan]")
         console.print(f"  gondola migrate downgrade -1")
 
-
 def check_model_dependencies(model_name: str) -> list:
     """Check if model is referenced in other models."""
     # This is a simplified version - you'd need to parse Python files
@@ -99,7 +97,6 @@ def check_model_dependencies(model_name: str) -> list:
     
     return dependencies
 
-
 def remove_model_import(file_name: str, model_name: str) -> None:
     """Remove model import from __init__.py."""
     init_path = Path("app/models/__init__.py")
@@ -113,7 +110,6 @@ def remove_model_import(file_name: str, model_name: str) -> None:
     if import_line in content:
         content = content.replace(import_line, "")
         init_path.write_text(content)
-
 
 @app.command()
 def router(
