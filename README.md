@@ -395,7 +395,7 @@ Found a bug? We'd love to hear about it!
 
 ### Creating an Issue
 
-Open an issue on [GitHub Issues](https://github.com/yourusername/gondola/issues) with:
+Open an issue on [GitHub Issues](https://github.com/karanjaE/gondola-cli/issues) with:
 
 - **Clear title** describing the problem
 - **Gondola version**: Run `pip show gondola`
@@ -419,7 +419,7 @@ Gondola is licensed under the **MIT License**.
 ```
 MIT License
 
-Copyright (c) 2025 Gondola Contributors
+Copyright (c) 2025 E. Karanja Muriithi
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -448,7 +448,7 @@ See [LICENSE](LICENSE) file for full text.
 
 ### Our Pledge
 
-We are committed to providing a welcoming and inclusive experience for everyone, regardless of age, body size, disability, ethnicity, gender identity and expression, level of experience, nationality, personal appearance, race, religion, or sexual identity and orientation.
+Just be nice. 
 
 ### Our Standards
 
@@ -483,12 +483,10 @@ This Code of Conduct is adapted from the [Contributor Covenant](https://www.cont
 
 Gondola is inspired by:
 
-- **Ruby on Rails** - For proving that developer happiness matters
 - **FastAPI** - For bringing async Python to the mainstream
 - **Django** - For showing the power of conventions
-- **Laravel** - For artisan command patterns
 
-Special thanks to all our [contributors](https://github.com/yourusername/gondola/graphs/contributors)!
+Special thanks to all our [contributors](https://github.com/karanjaE/gondola-cli/graphs/contributors)!
 
 ---
 
@@ -496,10 +494,10 @@ Special thanks to all our [contributors](https://github.com/yourusername/gondola
 
 - **Documentation**: [https://gondola.dev/docs](https://gondola.dev/docs)
 - **PyPI**: [https://pypi.org/project/gondola](https://pypi.org/project/gondola)
-- **GitHub**: [https://github.com/yourusername/gondola](https://github.com/yourusername/gondola)
-- **Discussions**: [https://github.com/yourusername/gondola/discussions](https://github.com/yourusername/gondola/discussions)
+- **GitHub**: [https://github.com/karanjaE/gondola-cli](https://github.com/karanjaE/gondola-cli)
+- **Discussions**: [https://github.com/karanjaE/gondola-cli/discussions](https://github.com/karanjaE/gondola-cli/discussions)
 - **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
-**Happy building with Gondola! 🚡**
+**Happy building**
