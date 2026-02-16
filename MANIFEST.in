@@ -1,0 +1,4 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+recursive-include gondola/templates *.jinja2 *.j2 *.html *.py
