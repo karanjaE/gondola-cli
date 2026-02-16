@@ -5,6 +5,20 @@ description = "An awesome cli tool for FastAPI"
 authors = ["karanjaE <rranchow@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+repository = "https://github.com/karanjaE/gondola-cli"
+documentation = "https://github.com/karanjaE/gondola-cli"
+keywords = ["fastapi", "cli", "scaffold", "generator", "framework"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Framework :: FastAPI",
+]
 packages = [{include = "gondola"}]
 
 [tool.poetry.dependencies]
@@ -15,7 +29,6 @@ jinja2 = "^3.1.6"
 sqlmodel = "^0.0.32"
 alembic = "^1.18.3"
 pydantic-settings = "^2.12.0"
-
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^9.0.2"
