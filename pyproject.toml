@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gondola-cli"
-version = "0.1.0"
+version = "0.1.1"
 description = "An awesome cli tool for FastAPI"
 authors = ["karanjaE <rranchow@gmail.com>"]
 license = "MIT"
