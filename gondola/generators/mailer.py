@@ -24,7 +24,7 @@ class MailerGenerator(BaseGenerator):
         
         # Generate mailer
         mailer_path = mailers_dir / f"{self.file_name}.py"
-        self.copy_template("app/mailer/mailer.py.jinja", mailer_path, context)
+        self.copy_template("legacy/app/mailer/mailer.py.jinja", mailer_path, context)
         
         # Generate test
         test_path = Path("test/unit") / f"test_{self.file_name}.py"

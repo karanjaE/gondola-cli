@@ -107,3 +107,19 @@ class TestRouterGenerator:
                 assert "User" in content
             finally:
                 os.chdir(original_cwd)
+
+
+class TestRouterGeneratorPostgresLayout:
+    def test_generate_creates_api_router(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(tmpdir)
+                (Path(tmpdir) / "api" / "routers").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "integration").mkdir(parents=True)
+
+                RouterGenerator("User").generate()
+
+                assert (Path(tmpdir) / "api" / "routers" / "user.py").exists()
+            finally:
+                os.chdir(original_cwd)

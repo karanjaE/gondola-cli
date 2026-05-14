@@ -147,3 +147,41 @@ class TestModelGenerator:
                 assert content2.count("from .user import User") == 1
             finally:
                 os.chdir(original_cwd)
+
+
+class TestModelGeneratorPostgresLayout:
+    """ModelGenerator when api/models exists (PostgreSQL-style layout)."""
+
+    def test_generate_creates_model_and_schema(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(tmpdir)
+                (Path(tmpdir) / "api" / "models" / "schemas").mkdir(parents=True)
+                (Path(tmpdir) / "api" / "models" / "schemas" / "__init__.py").touch()
+                (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
+
+                generator = ModelGenerator("User", "name:str,email:str")
+                generator.generate()
+
+                assert (Path(tmpdir) / "api" / "models" / "user.py").exists()
+                assert (Path(tmpdir) / "api" / "models" / "schemas" / "user.py").exists()
+                assert (Path(tmpdir) / "test" / "unit" / "test_user.py").exists()
+            finally:
+                os.chdir(original_cwd)
+
+    def test_generate_does_not_require_models_init(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(tmpdir)
+                (Path(tmpdir) / "api" / "models" / "schemas").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
+
+                ModelGenerator("Item").generate()
+
+                init_path = Path(tmpdir) / "api" / "models" / "__init__.py"
+                if init_path.exists():
+                    assert "from .item import Item" not in init_path.read_text()
+            finally:
+                os.chdir(original_cwd)

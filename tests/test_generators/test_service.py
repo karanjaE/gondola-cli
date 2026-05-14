@@ -90,3 +90,21 @@ class TestServiceGenerator:
                 assert "Emailservice" in content
             finally:
                 os.chdir(original_cwd)
+
+
+class TestServiceGeneratorPostgresLayout:
+    def test_generate_writes_api_services(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(tmpdir)
+                (Path(tmpdir) / "api" / "services").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
+
+                ServiceGenerator("EmailService").generate()
+
+                path = Path(tmpdir) / "api" / "services" / "email_service.py"
+                assert path.exists()
+                assert "Emailservice" in path.read_text()
+            finally:
+                os.chdir(original_cwd)

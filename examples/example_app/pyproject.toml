@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "example-app"
+version = "0.1.0"
+description = "Example HTTP API (reference layout for gondola templates)"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+sqlmodel = "^0.0.38"
+alembic = "^1.18.4"
+fastapi = {extras = ["standard"], version = "^0.136.1"}
+uvicorn = "^0.46.0"
+psycopg2-binary = "^2.9.12"
+geoalchemy2 = "^0.19.0"
+pydantic = "^2.13.3"
+pydantic-settings = "^2.14.1"
+asyncpg = "^0.31.0"
+greenlet = "^3.5.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.fastapi]
+entrypoint = "main:app"

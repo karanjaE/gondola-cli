@@ -1,0 +1,29 @@
+import importlib
+import logging
+from pathlib import Path
+
+from fastapi import APIRouter
+
+logger = logging.getLogger(__name__)
+
+api_router = APIRouter()
+
+# Dynamically discover and include all routers
+routers_dir = Path(__file__).parent
+package = "api.routers"
+
+for py_file in routers_dir.glob("*.py"):
+    name = py_file.stem
+    if name.startswith("__"):
+        continue
+
+    try:
+        module = importlib.import_module(f"{package}.{name}")
+        
+        if hasattr(module, "router"):
+            router = getattr(module, "router")
+            if isinstance(router, APIRouter):
+                api_router.include_router(router)
+                logger.debug("Auto-included router from %s.py", name)
+    except Exception as e:
+        logger.error("Failed to auto-include router from %s.py: %s", name, e)
