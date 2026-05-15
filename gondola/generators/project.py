@@ -1,5 +1,8 @@
 import re
 import subprocess
+import urllib.request
+import urllib.error
+import json
 from pathlib import Path
 from typing import List
 
@@ -14,6 +17,65 @@ def _project_slug(name: str) -> str:
     return s or "app"
 
 
+# Fallback pinned versions — used when PyPI is unreachable
+_FALLBACK_VERSIONS: dict[str, str] = {
+    "fastapi":          "0.136.1",
+    "uvicorn":          "0.46.0",
+    "sqlmodel":         "0.0.38",
+    "alembic":          "1.18.4",
+    "pydantic":         "2.13.3",
+    "pydantic-settings": "2.14.1",
+    "asyncpg":          "0.31.0",
+    "psycopg2-binary":  "2.9.12",
+    "asyncmy":          "0.2.9",
+    "cryptography":     "42.0.0",
+    "aiosqlite":        "0.20.0",
+    "greenlet":         "3.5.0",
+    "geoalchemy2":      "0.19.0",
+    "pgvector":         "0.3.6",
+    "pytest":           "9.0.2",
+    "pytest-asyncio":   "1.3.0",
+    "pytest-cov":       "7.0.0",
+    "httpx":            "0.28.1",
+    "mypy":             "1.19.1",
+    "ruff":             "0.15.0",
+}
+
+
+def _latest_version(package: str) -> str:
+    """Return the latest stable version from PyPI, or the fallback pin."""
+    try:
+        url = f"https://pypi.org/pypi/{package}/json"
+        with urllib.request.urlopen(url, timeout=5) as resp:  # noqa: S310
+            data = json.loads(resp.read())
+        return data["info"]["version"]
+    except Exception:
+        return _FALLBACK_VERSIONS.get(package, "*")
+
+
+def _fetch_versions(db_engine: str, extensions: list[str]) -> dict[str, str]:
+    """Fetch latest versions for all packages used in the generated project."""
+    packages = [
+        "fastapi", "uvicorn", "sqlmodel", "alembic",
+        "pydantic", "pydantic-settings", "greenlet",
+        "pytest", "pytest-asyncio", "pytest-cov", "httpx", "mypy", "ruff",
+    ]
+
+    if db_engine == "postgresql":
+        packages += ["asyncpg", "psycopg2-binary"]
+    elif db_engine == "mysql":
+        packages += ["asyncmy", "cryptography"]
+    else:
+        packages += ["aiosqlite"]
+
+    if "postgis" in extensions:
+        packages.append("geoalchemy2")
+    if "pgvector" in extensions:
+        packages.append("pgvector")
+
+    return {pkg: _latest_version(pkg) for pkg in packages}
+
+
 class ProjectGenerator(BaseGenerator):
     """Generator for creating a new FastAPI project."""
 
@@ -23,12 +85,14 @@ class ProjectGenerator(BaseGenerator):
         db_engine: str,
         include_docker: bool = True,
         extensions: List[str] | None = None,
+        versions: dict[str, str] | None = None,
     ):
         super().__init__("")
         self.name = name
         self.db_engine = db_engine
         self.include_docker = include_docker
         self.extensions = extensions or []
+        self.versions = versions  # None means "fetch at generate() time"
         self.project_path = Path.cwd() / name
         self._tpl_prefix = "default"
 
@@ -36,6 +100,8 @@ class ProjectGenerator(BaseGenerator):
         return f"{self._tpl_prefix}/{relative}"
 
     def generate(self) -> None:
+        versions = self.versions or _fetch_versions(self.db_engine, self.extensions)
+
         context = {
             "project_name": self.name,
             "project_slug": _project_slug(self.name),
@@ -44,6 +110,7 @@ class ProjectGenerator(BaseGenerator):
             "extensions": self.extensions,
             "use_postgis": "postgis" in self.extensions,
             "use_pgvector": "pgvector" in self.extensions,
+            "versions": versions,
         }
 
         self._create_directories()

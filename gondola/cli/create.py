@@ -174,8 +174,18 @@ def project(
     # ── Normalise db engine for the generator ─────────────────────────────
     db_engine = "postgresql" if db in ("postgres", "postgresql") else db
 
-    # ── Generate ──────────────────────────────────────────────────────────
+    # ── Fetch latest package versions from PyPI ───────────────────────────
     console.print()
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        console=console,
+    ) as progress:
+        progress.add_task(description="Fetching latest package versions...", total=None)
+        from ..generators.project import _fetch_versions
+        versions = _fetch_versions(db_engine, ext_list)
+
+    # ── Generate project files ─────────────────────────────────────────────
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -187,6 +197,7 @@ def project(
             db_engine=db_engine,
             include_docker=docker,
             extensions=ext_list,
+            versions=versions,
         )
         generator.generate()
 
@@ -197,3 +208,4 @@ def project(
     console.print("  # Configure your .env file")
     console.print("  gondola migrate up")
     console.print("  gondola start")
+
