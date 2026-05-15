@@ -130,13 +130,13 @@ gondola i my-api
 
 #### Prompts and defaults
 
-| Prompt | Default |
-|--------|---------|
-| Project name | `my-fastapi-project` |
-| Database engine | `postgres` |
-| Include Docker? | `Yes` |
-| Include extensions? | `No` |
-| Extensions | *(none)* |
+| Prompt              | Default              |
+| ------------------- | -------------------- |
+| Project name        | `my-fastapi-project` |
+| Database engine     | `postgres`           |
+| Include Docker?     | `Yes`                |
+| Include extensions? | `No`                 |
+| Extensions          | _(none)_             |
 
 > **Note**: Project names are automatically normalized to `lowercase-with-hyphens`. Extensions (`postgis`, `pgvector`) are only applicable when using PostgreSQL.
 
@@ -163,7 +163,10 @@ my-api/
 │   └── dependencies/
 ├── core/                    # Settings (get_settings), database, logging
 ├── db/
-│   └── migrations/          # Alembic (script_location in alembic.ini)
+│   ├── migrations/          # Alembic (script_location in alembic.ini)
+│   └── seeds/               # Database seed scripts
+│       ├── base_seed.py     # BaseSeed class
+│       └── example_seed.py  # Example seed file
 ├── test/
 │   ├── unit/
 │   │   ├── models/          # Model unit tests
@@ -223,13 +226,13 @@ gondola start -e prod -w 4
 
 #### Options
 
-| Option | Alias | Default | Description |
-|--------|-------|---------|-------------|
-| `--port` | `-p` | `$PORT` or `8000` | Port number |
-| `--env` | `-e` | `development` | Runtime mode: `dev`/`development` or `prod`/`production` |
-| `--reload` | `-r` | `false` | Hot-reload on code changes (development only) |
-| `--host` | `-H` | `127.0.0.1` | Host address |
-| `--workers` | `-w` | `1` | Number of workers (production only) |
+| Option      | Alias | Default           | Description                                              |
+| ----------- | ----- | ----------------- | -------------------------------------------------------- |
+| `--port`    | `-p`  | `$PORT` or `8000` | Port number                                              |
+| `--env`     | `-e`  | `development`     | Runtime mode: `dev`/`development` or `prod`/`production` |
+| `--reload`  | `-r`  | `false`           | Hot-reload on code changes (development only)            |
+| `--host`    | `-H`  | `127.0.0.1`       | Host address                                             |
+| `--workers` | `-w`  | `1`               | Number of workers (production only)                      |
 
 > **Note**: `--reload` is ignored in production mode. `--workers` is ignored in development mode.
 
@@ -295,6 +298,17 @@ gondola g mailer Welcome               # alias
 - `api/mailers/welcome.py` — Mailer class with template support
 - `test/unit/mailers/test_welcome.py` — Unit tests
 
+#### Generate a seed
+
+```bash
+gondola generate seed User
+gondola g seed User                    # alias
+```
+
+**Creates:**
+
+- `db/seeds/user_seed.py` — Seed class inheriting from `BaseSeed`
+
 ---
 
 ### Database Commands
@@ -306,17 +320,6 @@ gondola g mailer Welcome               # alias
 ```bash
 gondola db init
 ```
-
-It performs the following steps in order:
-
-1. **Reads `.env`** and extracts the `DATABASE_URL`
-2. **Creates the database** if it doesn't exist yet; if it does, it tells you and moves on
-3. **Enables extensions** (PostgreSQL only) — detects `postgis` / `pgvector` from `pyproject.toml` and runs `CREATE EXTENSION IF NOT EXISTS` for each
-4. **Runs the initial migration**:
-   ```bash
-   alembic revision --autogenerate -m "Initial migration"
-   alembic upgrade head
-   ```
 
 > **Prerequisites**: Run `poetry install` first — `gondola db init` uses the project's virtual environment to connect to the database (asyncpg, asyncmy, or aiosqlite must be installed).
 
@@ -330,6 +333,39 @@ gondola db init
 gondola start
 ```
 
+#### Seed the database
+
+Run your database seed files to populate the database with initial data:
+
+```bash
+# Run all seeds in db/seeds/
+gondola db seed
+gondola db s                 # alias
+
+# Run a specific seed file (e.g. user_seed.py)
+gondola db seed user
+```
+
+#### Clear the database
+
+To quickly wipe all data without destroying the database completely, use `clear`. This runs `alembic downgrade base` and then `alembic upgrade head`.
+
+```bash
+gondola db clear
+# or
+gondola db c                 # alias
+```
+
+#### Destroy the database
+
+To completely drop all tables and delete the database itself, use `destroy`.
+
+```bash
+gondola db destroy
+# or
+gondola db d                 # alias
+```
+
 ---
 
 ### Migration Commands
@@ -340,6 +376,7 @@ gondola start
 
 ```bash
 gondola generate migration "Add user preferences table"
+# or
 gondola g migration "Add user preferences table"    # alias
 ```
 
@@ -351,6 +388,7 @@ gondola migrate up
 
 # Upgrade to a specific revision
 gondola migrate up --revision abc123
+# or
 gondola migrate up -r abc123
 ```
 
@@ -362,6 +400,7 @@ gondola migrate down
 
 # Roll back to a specific revision
 gondola migrate down --revision abc123
+# or
 gondola migrate down -r abc123
 ```
 
@@ -369,6 +408,7 @@ gondola migrate down -r abc123
 
 ```bash
 gondola migrate history
+# or
 gondola migrate h          # alias
 ```
 
@@ -376,6 +416,7 @@ gondola migrate h          # alias
 
 ```bash
 gondola migrate current
+# or
 gondola migrate c          # alias
 ```
 
@@ -389,6 +430,7 @@ gondola migrate c          # alias
 
 ```bash
 gondola delete model User
+# or
 gondola d model User          # alias
 ```
 
@@ -409,6 +451,7 @@ gondola migrate down
 
 ```bash
 gondola delete router users
+# or
 gondola d router users        # alias
 ```
 
@@ -418,6 +461,7 @@ Removes `api/routers/users.py` and `test/integration/routers/test_users_routes.p
 
 ```bash
 gondola delete service UserNotification
+# or
 gondola d service UserNotification     # alias
 ```
 
@@ -427,6 +471,7 @@ Removes `api/services/user_notification.py` and `test/unit/services/test_user_no
 
 ```bash
 gondola delete mailer Welcome
+# or
 gondola d mailer Welcome               # alias
 ```
 
@@ -436,26 +481,30 @@ Removes `api/mailers/welcome.py` and `test/unit/mailers/test_welcome.py`.
 
 ## Command Reference
 
-| Command | Alias | Description |
-|---------|-------|-------------|
-| `gondola init [name]` | `gondola i [name]` | Create a new FastAPI project (interactive wizard) |
-| `gondola start` | `gondola s` | Start the FastAPI server |
-| `gondola db init` | — | Initialize DB: create it, enable extensions, run initial migration |
-| `gondola generate model <name>` | `gondola g model <name>` | Generate model + schema + test |
-| `gondola generate router <name>` | `gondola g router <name>` | Generate router + integration test |
-| `gondola generate service <name>` | `gondola g service <name>` | Generate service + unit test |
-| `gondola generate mailer <name>` | `gondola g mailer <name>` | Generate mailer + unit test |
-| `gondola generate migration <message>` | `gondola g migration <message>` | Create an Alembic migration |
-| `gondola migrate up` | — | Apply migrations (to head) |
-| `gondola migrate up -r <hash>` | — | Apply migrations to a revision |
-| `gondola migrate down` | — | Roll back one migration |
-| `gondola migrate down -r <hash>` | — | Roll back to a revision |
-| `gondola migrate history` | `gondola migrate h` | Show migration history |
-| `gondola migrate current` | `gondola migrate c` | Show current revision |
-| `gondola delete model <name>` | `gondola d model <name>` | Delete model + schema + test |
-| `gondola delete router <name>` | `gondola d router <name>` | Delete router + integration test |
-| `gondola delete service <name>` | `gondola d service <name>` | Delete service + unit test |
-| `gondola delete mailer <name>` | `gondola d mailer <name>` | Delete mailer + unit test |
+| Command                                | Alias                           | Description                                                        |
+| -------------------------------------- | ------------------------------- | ------------------------------------------------------------------ |
+| `gondola init`                         | `gondola i`                     | Create a new FastAPI project (interactive wizard)                  |
+| `gondola start`                        | `gondola s`                     | Start the FastAPI server                                           |
+| `gondola db init`                      | `gondola db i`                  | Initialize DB: create it, enable extensions, run initial migration |
+| `gondola db seed [name]`               | `gondola db s [name]`           | Run one seed file, or all seeds if no name is given                |
+| `gondola db clear`                     | `gondola db c`                  | Drop all tables and recreate them (wipe data)                      |
+| `gondola db destroy`                   | `gondola db d`                  | Drop all tables and drop the database entirely                     |
+| `gondola generate model <name>`        | `gondola g model <name>`        | Generate model + schema + test                                     |
+| `gondola generate router <name>`       | `gondola g router <name>`       | Generate router + integration test                                 |
+| `gondola generate service <name>`      | `gondola g service <name>`      | Generate service + unit test                                       |
+| `gondola generate mailer <name>`       | `gondola g mailer <name>`       | Generate mailer + unit test                                        |
+| `gondola generate seed <name>`         | `gondola g seed <name>`         | Generate database seed file                                        |
+| `gondola generate migration <message>` | `gondola g migration <message>` | Create an Alembic migration                                        |
+| `gondola migrate up`                   | —                               | Apply migrations (to head)                                         |
+| `gondola migrate up -r <hash>`         | —                               | Apply migrations to a revision                                     |
+| `gondola migrate down`                 | —                               | Roll back one migration                                            |
+| `gondola migrate down -r <hash>`       | —                               | Roll back to a revision                                            |
+| `gondola migrate history`              | `gondola migrate h`             | Show migration history                                             |
+| `gondola migrate current`              | `gondola migrate c`             | Show current revision                                              |
+| `gondola delete model <name>`          | `gondola d model <name>`        | Delete model + schema + test                                       |
+| `gondola delete router <name>`         | `gondola d router <name>`       | Delete router + integration test                                   |
+| `gondola delete service <name>`        | `gondola d service <name>`      | Delete service + unit test                                         |
+| `gondola delete mailer <name>`         | `gondola d mailer <name>`       | Delete mailer + unit test                                          |
 
 ---
 
