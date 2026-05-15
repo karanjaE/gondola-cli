@@ -185,7 +185,7 @@ A **fresh Git repository** is initialized in the project folder (`git init`).
 cd my-api
 poetry install
 # Configure your .env file
-gondola migrate up
+gondola db init
 gondola start
 ```
 
@@ -255,7 +255,7 @@ gondola g model User           # alias
 **Run migration:**
 
 ```bash
-gondola generate migration --message "Create User model"
+gondola generate migration "Create User model"
 gondola migrate up
 ```
 
@@ -294,6 +294,41 @@ gondola g mailer Welcome               # alias
 
 - `api/mailers/welcome.py` — Mailer class with template support
 - `test/unit/mailers/test_welcome.py` — Unit tests
+
+---
+
+### Database Commands
+
+#### Initialize the database
+
+`gondola db init` is the one-stop command to get your database ready for the first time:
+
+```bash
+gondola db init
+```
+
+It performs the following steps in order:
+
+1. **Reads `.env`** and extracts the `DATABASE_URL`
+2. **Creates the database** if it doesn't exist yet; if it does, it tells you and moves on
+3. **Enables extensions** (PostgreSQL only) — detects `postgis` / `pgvector` from `pyproject.toml` and runs `CREATE EXTENSION IF NOT EXISTS` for each
+4. **Runs the initial migration**:
+   ```bash
+   alembic revision --autogenerate -m "Initial migration"
+   alembic upgrade head
+   ```
+
+> **Prerequisites**: Run `poetry install` first — `gondola db init` uses the project's virtual environment to connect to the database (asyncpg, asyncmy, or aiosqlite must be installed).
+
+**Typical first-time workflow:**
+
+```bash
+cd my-api
+poetry install
+# Edit .env with your real database credentials
+gondola db init
+gondola start
+```
 
 ---
 
@@ -405,6 +440,7 @@ Removes `api/mailers/welcome.py` and `test/unit/mailers/test_welcome.py`.
 |---------|-------|-------------|
 | `gondola init [name]` | `gondola i [name]` | Create a new FastAPI project (interactive wizard) |
 | `gondola start` | `gondola s` | Start the FastAPI server |
+| `gondola db init` | — | Initialize DB: create it, enable extensions, run initial migration |
 | `gondola generate model <name>` | `gondola g model <name>` | Generate model + schema + test |
 | `gondola generate router <name>` | `gondola g router <name>` | Generate router + integration test |
 | `gondola generate service <name>` | `gondola g service <name>` | Generate service + unit test |

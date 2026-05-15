@@ -2,6 +2,7 @@ import typer
 from rich.console import Console
 
 from .create import project as init_command
+from .db import app as db_app
 from .delete import app as delete_app
 from .generate import app as generate_app
 from .migrate import app as migrate_app
@@ -31,6 +32,9 @@ app.add_typer(delete_app, name="d", hidden=True)
 
 # ── gondola migrate ───────────────────────────────────────────────────────
 app.add_typer(migrate_app, name="migrate", help="Database migration commands")
+
+# ── gondola db ────────────────────────────────────────────────────────────
+app.add_typer(db_app, name="db", help="Database management commands")
 
 # ── gondola start / gondola s ─────────────────────────────────────────────
 app.command(name="start", help="Start the FastAPI server")(start_command)

@@ -206,6 +206,6 @@ def project(
     console.print(f"  cd {name}")
     console.print("  poetry install")
     console.print("  # Configure your .env file")
-    console.print("  gondola migrate up")
+    console.print("  gondola db init")
     console.print("  gondola start")
 
