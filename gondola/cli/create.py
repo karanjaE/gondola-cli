@@ -16,26 +16,35 @@ console = Console()
 def project(
     name: str = typer.Argument(..., help="Project name"),
     db: str = typer.Option(
-        "postgresql",
+        "postgres",
         "--db",
         "-d",
-        help="Database engine (sqlite, postgresql, mysql)",
+        help="Database engine (postgres, mysql, mariadb, sqlite)",
     ),
     docker: bool = typer.Option(
         True,
         "--docker/--no-docker",
+        "-x",
         help="Include Docker setup",
     ),
     extensions: Optional[str] = typer.Option(
         None,
         "--extensions",
+        "-e",
         help="Database extensions (comma-separated: postgis,pgvector)",
     ),
 ) -> None:
-    """Create a new FastAPI project"""
+    """Initialize a new FastAPI project"""
 
-    if db not in ["postgresql", "mysql", "sqlite"]:
-        console.print("[red]Error: Database must be one of: postgresql, mysql, sqlite[/red]")
+    if db not in ["postgres", "postgresql", "mysql", "mariadb", "sqlite"]:
+        console.print("[red]Error: Database must be one of: postgres, mysql, mariadb, sqlite[/red]")
+        raise typer.Exit(1)
+        
+    # Map mariadb and postgres to their underlying engine names for the generator
+    if db in ["postgres", "postgresql"]:
+        db = "postgresql"
+    elif db == "mariadb":
+        db = "mysql"
         raise typer.Exit(1)
 
     project_path = Path.cwd() / name
@@ -73,6 +82,6 @@ def project(
         console.print("\n[cyan]Next steps:[/cyan]")
         console.print(f"  cd {name}")
         console.print("  poetry install")
-        console.print("  # Configure your env file")
-        console.print("  gondola migrate upgrade")
-        console.print("  gondola run server")
+        console.print("  # Configure your .env file")
+        console.print("  gondola migrate up")
+        console.print("  gondola start")

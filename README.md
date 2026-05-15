@@ -25,7 +25,7 @@ Gondola is a command-line tool designed to streamline FastAPI development by pro
 - **Database Management**: Built-in migration commands powered by Alembic
 - **Testing First**: Every generated component includes comprehensive tests
 - **Docker Ready**: Optional Docker and docker-compose configuration
-- **Multiple Database Support**: PostgreSQL (with PostGIS/pgvector), SQLite
+- **Multiple Database Support**: PostgreSQL (with PostGIS/pgvector), MySQL, MariaDB, SQLite
 - **Email Support**: Built-in mailer generator with templates
 - **Type Safe**: Full mypy support with Pydantic models
 - **Migration Rollback**: Reversible database migrations
@@ -77,59 +77,65 @@ You should see the Gondola CLI help menu with available commands.
 
 ### Start a New Project
 
-Create a new FastAPI project with PostgreSQL and Docker (defaults):
+`gondola init` (alias: `gondola i`) creates a new FastAPI project.
 
 ```bash
-gondola create project my-api
-# same as:
-gondola create project my-api --db=postgresql --docker
+# Default: PostgreSQL + Docker
+gondola init my-api
+# or with alias
+gondola i my-api
+
+# Explicit options
+gondola init my-api --db=postgres --docker
+
+# Skip Docker files
+gondola init my-api --no-docker
+
+# Different database engines
+gondola init my-api --db=sqlite
+gondola init my-api --db=mysql
+gondola init my-api --db=mariadb
+
+# PostgreSQL extensions
+gondola init my-api --db=postgres --extensions postgis,pgvector
 ```
 
-Skip Docker files:
+#### Options
 
-```bash
-gondola create project my-api --no-docker
-```
-
-Create a minimal project with SQLite (legacy layout):
-
-```bash
-gondola create project my-api --db=sqlite
-```
-
-Optional Postgres extensions when using `--db=postgresql`:
-
-```bash
-gondola create project my-api --extensions postgis,pgvector
-```
+| Option | Alias | Default | Description |
+|--------|-------|---------|-------------|
+| `--db` | `-d` | `postgres` | Database engine: `postgres`, `mysql`, `mariadb`, `sqlite` |
+| `--docker / --no-docker` | `-x` | `true` | Include Docker setup |
+| `--extensions` | `-e` | `""` | Comma-separated list of extensions (e.g. `postgis,pgvector`) |
 
 #### What gets created?
-
-**PostgreSQL (default: `--db=postgresql`)** — async SQLModel + asyncpg, neutral naming in config and Docker metadata:
 
 ```
 my-api/
 ├── api/
-│   ├── models/              # SQLModel tables (e.g. base_model.py)
+│   ├── models/              # SQLModel tables
 │   ├── models/schemas/      # Pydantic schemas (per resource)
 │   ├── routers/             # Routers auto-included from *.py (export `router`)
 │   ├── services/
+│   ├── mailers/
 │   └── dependencies/
 ├── core/                    # Settings (get_settings), database, logging
 ├── db/
 │   └── migrations/          # Alembic (script_location in alembic.ini)
 ├── test/
-│   ├── unit/             # Unit tests
-│   └── integration/      # Integration tests
-├── alembic/              # Database migrations
-├── docker-compose.yml    # Container orchestration
-├── Dockerfile            # App container
-└── pyproject.toml        # Dependencies
+│   ├── unit/
+│   │   ├── models/          # Model unit tests
+│   │   ├── services/        # Service unit tests
+│   │   └── mailers/         # Mailer unit tests
+│   └── integration/
+│       └── routers/         # Router integration tests
+├── alembic.ini
+├── docker-compose.yml       # Container orchestration (if --docker)
+├── Dockerfile               # App container (if --docker)
+└── pyproject.toml           # Dependencies
 ```
 
 A **fresh Git repository** is initialized in the project folder (`git init`).
-
-**SQLite / MySQL (`--db=sqlite` or `--db=mysql`)** — Use the exact same directory structure and generators as PostgreSQL, but configure `alembic.ini`, `core/database.py`, and `pyproject.toml` with the appropriate async drivers (aiosqlite or asyncmy).
 
 #### Next steps
 
@@ -137,8 +143,8 @@ A **fresh Git repository** is initialized in the project folder (`git init`).
 cd my-api
 poetry install
 # Configure your .env file
-gondola migrate upgrade
-gondola run server
+gondola migrate up
+gondola start
 ```
 
 Your API is now running at `http://localhost:8000` with interactive docs at `/docs`.
@@ -147,165 +153,231 @@ Your API is now running at `http://localhost:8000` with interactive docs at `/do
 
 ---
 
+### Starting the Server
+
+`gondola start` (alias: `gondola s`) starts the FastAPI server.
+
+```bash
+# Development mode (default)
+gondola start
+gondola s          # alias
+
+# Custom port and host
+gondola start --port 3000 --host 0.0.0.0
+gondola start -p 3000 -H 0.0.0.0
+
+# Enable hot-reload in development
+gondola start --reload
+gondola start -r
+
+# Production mode
+gondola start --env production
+gondola start -e prod
+
+# Production with multiple workers
+gondola start -e prod --workers 4
+gondola start -e prod -w 4
+```
+
+#### Options
+
+| Option | Alias | Default | Description |
+|--------|-------|---------|-------------|
+| `--port` | `-p` | `$PORT` or `8000` | Port number |
+| `--env` | `-e` | `development` | Runtime mode: `dev`/`development` or `prod`/`production` |
+| `--reload` | `-r` | `false` | Hot-reload on code changes (development only) |
+| `--host` | `-H` | `127.0.0.1` | Host address |
+| `--workers` | `-w` | `1` | Number of workers (production only) |
+
+> **Note**: `--reload` is ignored in production mode. `--workers` is ignored in development mode.
+
+---
+
 ### Generators
 
-Run these from the **root of a generated project** (where `main.py` lives).
+`gondola generate` (alias: `gondola g`) generates code components. Run these from the **root of a generated project** (where `main.py` lives).
 
 #### Generate a model
 
 ```bash
-gondola generate model User name:str email:str age:int is_active:bool
+gondola generate model User
+gondola g model User           # alias
 ```
 
 **Creates:**
 
-- `api/models/user.py` - SQLModel table definition
-- `api/models/schemas/user.py` - Pydantic schemas (Create, Update, Response)
-- `test/unit/models/test_user.py` - Unit tests
+- `api/models/user.py` — SQLModel table definition
+- `api/models/schemas/user.py` — Pydantic schemas (Create, Update, Response)
+- `test/unit/models/test_user.py` — Unit tests
 
 **Run migration:**
 
 ```bash
-gondola migrate create "Create User model"
-gondola migrate upgrade
+gondola generate migration --message "Create User model"
+gondola migrate up
 ```
 
-#### Generate a Router
-
-Create RESTful API endpoints:
+#### Generate a router
 
 ```bash
 gondola generate router users --model=User
+gondola g router users --model=User    # alias
 ```
 
 **Creates:**
 
-- `api/routers/users.py` - CRUD endpoints (list, create, get, update, delete)
-- `test/integration/routers/test_users_routes.py` - Integration tests
+- `api/routers/users.py` — CRUD endpoints (list, create, get, update, delete)
+- `test/integration/routers/test_users_routes.py` — Integration tests
 
-**Register the router** in `main.py`:
-
-```python
-from api.routers import users
-app.include_router(users.router)
-```
-
-#### Generate a Service
-
-Create a service class for business logic:
+#### Generate a service
 
 ```bash
 gondola generate service UserNotification
+gondola g service UserNotification     # alias
 ```
 
 **Creates:**
 
-- `api/services/user_notification.py` - Service class with Celery task decorator
-- `test/unit/services/test_user_notification.py` - Unit tests
+- `api/services/user_notification.py` — Service class
+- `test/unit/services/test_user_notification.py` — Unit tests
 
-#### Generate a Mailer
-
-Create an email mailer with templates:
+#### Generate a mailer
 
 ```bash
 gondola generate mailer Welcome
+gondola g mailer Welcome               # alias
 ```
 
-Creates **`api/mailers/welcome.py`** (and `__init__.py` if needed) plus `test/unit/mailers/test_welcome.py`.
+**Creates:**
+
+- `api/mailers/welcome.py` — Mailer class with template support
+- `test/unit/mailers/test_welcome.py` — Unit tests
 
 ---
 
 ### Migration Commands
 
-Gondola wraps Alembic for easy database migration management.
+`gondola migrate` wraps Alembic for easy database migration management.
 
 #### Create a migration
 
 ```bash
-gondola migrate create "Add user preferences table"
+gondola generate migration --message "Add user preferences table"
+gondola g migration -m "Add user preferences table"    # alias
 ```
 
 #### Apply migrations
 
 ```bash
-# Upgrade to latest
-gondola migrate upgrade
+# Upgrade to latest (head)
+gondola migrate up
 
-# Upgrade to specific revision
-gondola migrate upgrade abc123
+# Upgrade to a specific revision
+gondola migrate up --revision abc123
+gondola migrate up -r abc123
 ```
 
 #### Rollback migrations
 
 ```bash
-# Downgrade one revision
-gondola migrate downgrade -1
+# Roll back one revision
+gondola migrate down
 
-# Downgrade to specific revision
-gondola migrate downgrade abc123
+# Roll back to a specific revision
+gondola migrate down --revision abc123
+gondola migrate down -r abc123
 ```
 
 #### View migration history
 
 ```bash
 gondola migrate history
+gondola migrate h          # alias
 ```
 
 #### Check current revision
 
 ```bash
 gondola migrate current
+gondola migrate c          # alias
 ```
 
 ---
 
-### Delete commands
+### Delete Commands
 
-Remove generated code safely with automatic cleanup.
+`gondola delete` (alias: `gondola d`) removes generated code safely with automatic cleanup.
 
 #### Delete a model
 
 ```bash
 gondola delete model User
+gondola d model User          # alias
 ```
 
 Gondola will:
 
-- List related files
-- Try to point out a related migration revision (under `db/migrations/versions`)
+- List related files (`api/models/user.py`, `api/models/schemas/user.py`, `test/unit/models/test_user.py`)
+- Check for simple cross-model references
+- Try to point out a related migration revision
 - Prompt for confirmation unless `--force`
 
-Deleting a model removes `api/models/<name>.py` and `api/models/schemas/<name>.py`.
-
-⚠️ **Migrations**: you still need to roll back or edit Alembic revisions yourself when appropriate:
+⚠️ **Migrations**: roll back Alembic revisions yourself when appropriate:
 
 ```bash
-gondola migrate downgrade -1
+gondola migrate down
 ```
 
 #### Delete a router
 
 ```bash
 gondola delete router users
+gondola d router users        # alias
 ```
 
-Removes `api/routers/users.py` and the matching integration test stub.
+Removes `api/routers/users.py` and `test/integration/routers/test_users_routes.py`.
+
+#### Delete a service
+
+```bash
+gondola delete service UserNotification
+gondola d service UserNotification     # alias
+```
+
+Removes `api/services/user_notification.py` and `test/unit/services/test_user_notification.py`.
+
+#### Delete a mailer
+
+```bash
+gondola delete mailer Welcome
+gondola d mailer Welcome               # alias
+```
+
+Removes `api/mailers/welcome.py` and `test/unit/mailers/test_welcome.py`.
 
 ---
 
-### Server commands
+## Command Reference
 
-Start the development ASGI server (wraps **uvicorn**):
-
-```bash
-# Default: reload on, host 0.0.0.0, port 8000
-gondola run server
-
-gondola run server --port=3000 --host=127.0.0.1
-gondola run server --workers=4 --no-reload
-```
-
-Celery helpers are **not** part of the CLI anymore; add background workers in your own codebase if you need them.
+| Command | Alias | Description |
+|---------|-------|-------------|
+| `gondola init <name>` | `gondola i <name>` | Create a new FastAPI project |
+| `gondola start` | `gondola s` | Start the FastAPI server |
+| `gondola generate model <name>` | `gondola g model <name>` | Generate model + schema + test |
+| `gondola generate router <name>` | `gondola g router <name>` | Generate router + integration test |
+| `gondola generate service <name>` | `gondola g service <name>` | Generate service + unit test |
+| `gondola generate mailer <name>` | `gondola g mailer <name>` | Generate mailer + unit test |
+| `gondola generate migration -m <msg>` | `gondola g migration -m <msg>` | Create an Alembic migration |
+| `gondola migrate up` | — | Apply migrations (to head) |
+| `gondola migrate up -r <hash>` | — | Apply migrations to a revision |
+| `gondola migrate down` | — | Roll back one migration |
+| `gondola migrate down -r <hash>` | — | Roll back to a revision |
+| `gondola migrate history` | `gondola migrate h` | Show migration history |
+| `gondola migrate current` | `gondola migrate c` | Show current revision |
+| `gondola delete model <name>` | `gondola d model <name>` | Delete model + schema + test |
+| `gondola delete router <name>` | `gondola d router <name>` | Delete router + integration test |
+| `gondola delete service <name>` | `gondola d service <name>` | Delete service + unit test |
+| `gondola delete mailer <name>` | `gondola d mailer <name>` | Delete mailer + unit test |
 
 ---
 
@@ -313,9 +385,9 @@ Celery helpers are **not** part of the CLI anymore; add background workers in yo
 
 We welcome contributions. The CLI renders Jinja templates from:
 
-- **`gondola/templates/default/`** — output for `gondola create project`
+- **`gondola/templates/default/`** — default output for `gondola init`
 
-**`examples/example_app/`** in this repository is a non-packaged reference layout aligned with the PostgreSQL template; update the Jinja trees when you change the example app.
+**`examples/example_app/`** in this repository is a non-packaged reference layout; update the Jinja trees when you change the example app.
 
 ### Setup development environment
 
@@ -403,7 +475,7 @@ Found a bug? We'd love to hear about it!
 Open an issue on [GitHub Issues](https://github.com/karanjaE/gondola-cli/issues) with:
 
 - **Clear title** describing the problem
-- **Gondola / package**: `pip show gondola-cli` (or your install tool’s equivalent)
+- **Gondola / package**: `pip show gondola-cli` (or your install tool's equivalent)
 - **Python version**: Run `python --version`
 - **Operating system**: e.g., macOS 14.2, Ubuntu 22.04
 - **Steps to reproduce** the issue

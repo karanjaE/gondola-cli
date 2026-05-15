@@ -83,7 +83,7 @@ def model(
 
     if migration_file:
         console.print("\n[cyan]Next steps:[/cyan]")
-        console.print("  gondola migrate downgrade -1")
+        console.print("  gondola migrate down")
 
 
 def check_model_dependencies(model_name: str, models_dir: Path) -> list[str]:
@@ -162,3 +162,85 @@ def router(
         console.print(f"[green]✓[/green] Deleted {file}")
 
     console.print(f"\n[green]✓[/green] Router '{name}' deleted successfully!")
+
+
+@app.command()
+def service(
+    name: str = typer.Argument(..., help="Service name to delete"),
+    force: bool = typer.Option(False, "--force", help="Skip confirmation"),
+):
+    """Delete a service and its test."""
+    if not Path("main.py").exists():
+        console.print("[red]Error: Not in a FastAPI project directory[/red]")
+        raise typer.Exit(1)
+
+    from ..utils.string_utils import to_snake_case
+
+    file_name = to_snake_case(name)
+
+    files_to_delete = [
+        Path("api/services") / f"{file_name}.py",
+        Path("test/unit/services") / f"test_{file_name}.py",
+    ]
+
+    existing_files = [f for f in files_to_delete if f.exists()]
+
+    if not existing_files:
+        console.print(f"[yellow]No files found for service '{name}'[/yellow]")
+        raise typer.Exit(0)
+
+    console.print("\n[yellow]The following files will be deleted:[/yellow]")
+    for file in existing_files:
+        console.print(f"  - {file}")
+
+    if not force:
+        if not Confirm.ask("\nDo you want to proceed?"):
+            console.print("[yellow]Deletion cancelled[/yellow]")
+            raise typer.Exit(0)
+
+    for file in existing_files:
+        file.unlink()
+        console.print(f"[green]✓[/green] Deleted {file}")
+
+    console.print(f"\n[green]✓[/green] Service '{name}' deleted successfully!")
+
+
+@app.command()
+def mailer(
+    name: str = typer.Argument(..., help="Mailer name to delete"),
+    force: bool = typer.Option(False, "--force", help="Skip confirmation"),
+):
+    """Delete a mailer and its test."""
+    if not Path("main.py").exists():
+        console.print("[red]Error: Not in a FastAPI project directory[/red]")
+        raise typer.Exit(1)
+
+    from ..utils.string_utils import to_snake_case
+
+    file_name = to_snake_case(name)
+
+    files_to_delete = [
+        Path("api/mailers") / f"{file_name}.py",
+        Path("test/unit/mailers") / f"test_{file_name}.py",
+    ]
+
+    existing_files = [f for f in files_to_delete if f.exists()]
+
+    if not existing_files:
+        console.print(f"[yellow]No files found for mailer '{name}'[/yellow]")
+        raise typer.Exit(0)
+
+    console.print("\n[yellow]The following files will be deleted:[/yellow]")
+    for file in existing_files:
+        console.print(f"  - {file}")
+
+    if not force:
+        if not Confirm.ask("\nDo you want to proceed?"):
+            console.print("[yellow]Deletion cancelled[/yellow]")
+            raise typer.Exit(0)
+
+    for file in existing_files:
+        file.unlink()
+        console.print(f"[green]✓[/green] Deleted {file}")
+
+    console.print(f"\n[green]✓[/green] Mailer '{name}' deleted successfully!")

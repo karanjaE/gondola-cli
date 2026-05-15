@@ -1,41 +1,81 @@
+import os
 import subprocess
 from pathlib import Path
+from typing import Optional
 
 import typer
 from rich.console import Console
 
-app = typer.Typer(help="Server management commands")
 console = Console()
 
 
-@app.command()
-def server(
-    port: int = typer.Option(8000, "--port", help="Port number"),
-    host: str = typer.Option("0.0.0.0", "--host", help="Host address"),
-    reload: bool = typer.Option(True, "--reload/--no-reload", help="Auto-reload on changes"),
-    workers: int = typer.Option(1, "--workers", help="Number of workers"),
-):
-    """Start the FastAPI development server."""
+def start(
+    port: Optional[int] = typer.Option(
+        None,
+        "--port",
+        "-p",
+        help="Port number (defaults to PORT env var or 8000)",
+    ),
+    env: str = typer.Option(
+        "development",
+        "--env",
+        "-e",
+        help="Runtime mode: dev/development or prod/production",
+    ),
+    reload: bool = typer.Option(
+        False,
+        "--reload/--no-reload",
+        "-r/-R",
+        help="Reload app on code changes (development only)",
+    ),
+    host: str = typer.Option(
+        "127.0.0.1",
+        "--host",
+        "-H",
+        help="Host address",
+    ),
+    workers: int = typer.Option(
+        1,
+        "--workers",
+        "-w",
+        help="Number of workers (production only)",
+    ),
+) -> None:
+    """Start the FastAPI server."""
     if not Path("main.py").exists():
         console.print("[red]Error: main.py not found in current directory[/red]")
         raise typer.Exit(1)
 
-    cmd = [
-        "uvicorn",
-        "main:app",
-        "--host",
-        host,
-        "--port",
-        str(port),
-    ]
+    # Normalise env
+    env_lower = env.lower()
+    if env_lower in ("dev", "development"):
+        is_production = False
+    elif env_lower in ("prod", "production"):
+        is_production = True
+    else:
+        console.print(
+            "[red]Error: --env must be one of: dev, development, prod, production[/red]"
+        )
+        raise typer.Exit(1)
 
-    if reload:
-        cmd.append("--reload")
+    # Resolve port: CLI flag → PORT env var → 8000
+    if port is None:
+        port = int(os.environ.get("PORT", 8000))
 
-    if workers > 1:
-        cmd.extend(["--workers", str(workers)])
+    if is_production:
+        cmd = ["fastapi", "run", "main.py", "--host", host, "--port", str(port)]
+        if workers > 1:
+            cmd.extend(["--workers", str(workers)])
+        mode_label = "production"
+    else:
+        cmd = ["fastapi", "dev", "main.py", "--host", host, "--port", str(port)]
+        if reload:
+            cmd.append("--reload")
+        mode_label = "development"
 
-    console.print(f"[cyan]Starting server on {host}:{port}...[/cyan]")
+    console.print(
+        f"[cyan]Starting FastAPI server ({mode_label}) on {host}:{port}...[/cyan]"
+    )
 
     try:
         subprocess.run(cmd)
