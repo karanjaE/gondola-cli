@@ -48,7 +48,7 @@ def model(
     console.print(f"  - api/models/schemas/{generator.file_name}.py")
     console.print(f"  - test/unit/models/test_{generator.file_name}.py")
     console.print("\n[cyan]Next steps:[/cyan]")
-    console.print(f"  gondola generate migration --message 'Create {name} model'")
+    console.print(f"  gondola generate migration 'Create {name} model'")
     console.print("  gondola migrate up")
 
 
@@ -112,12 +112,7 @@ def mailer(
 
 @app.command()
 def migration(
-    message: str = typer.Option(
-        ...,
-        "--message",
-        "-m",
-        help="Migration message / description",
-    ),
+    message: str = typer.Argument(..., help="Migration message / description"),
 ) -> None:
     """Create a new Alembic migration (autogenerate)."""
     _assert_alembic()

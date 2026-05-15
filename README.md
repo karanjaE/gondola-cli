@@ -304,8 +304,8 @@ gondola g mailer Welcome               # alias
 #### Create a migration
 
 ```bash
-gondola generate migration --message "Add user preferences table"
-gondola g migration -m "Add user preferences table"    # alias
+gondola generate migration "Add user preferences table"
+gondola g migration "Add user preferences table"    # alias
 ```
 
 #### Apply migrations
@@ -409,7 +409,7 @@ Removes `api/mailers/welcome.py` and `test/unit/mailers/test_welcome.py`.
 | `gondola generate router <name>` | `gondola g router <name>` | Generate router + integration test |
 | `gondola generate service <name>` | `gondola g service <name>` | Generate service + unit test |
 | `gondola generate mailer <name>` | `gondola g mailer <name>` | Generate mailer + unit test |
-| `gondola generate migration -m <msg>` | `gondola g migration -m <msg>` | Create an Alembic migration |
+| `gondola generate migration <message>` | `gondola g migration <message>` | Create an Alembic migration |
 | `gondola migrate up` | — | Apply migrations (to head) |
 | `gondola migrate up -r <hash>` | — | Apply migrations to a revision |
 | `gondola migrate down` | — | Roll back one migration |
