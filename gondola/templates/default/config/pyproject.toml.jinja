@@ -11,10 +11,17 @@ sqlmodel = "^0.0.38"
 alembic = "^1.18.4"
 fastapi = {extras = ["standard"], version = "^0.136.1"}
 uvicorn = "^0.46.0"
-psycopg2-binary = "^2.9.12"
 pydantic = "^2.13.3"
 pydantic-settings = "^2.14.1"
+{% if db_engine == 'postgresql' %}
+psycopg2-binary = "^2.9.12"
 asyncpg = "^0.31.0"
+{% elif db_engine == 'mysql' %}
+asyncmy = "^0.2.9"
+cryptography = "^42.0.0"
+{% else %}
+aiosqlite = "^0.20.0"
+{% endif %}
 greenlet = "^3.5.0"
 {% if use_postgis %}
 geoalchemy2 = "^0.19.0"

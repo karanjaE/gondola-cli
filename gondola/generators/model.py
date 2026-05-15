@@ -37,33 +37,32 @@ class ModelGenerator(BaseGenerator):
 
         if self._is_api_layout():
             self.copy_template(
-                "postgres/api/models/model.py.jinja",
+                "default/api/models/model.py.jinja",
                 Path("api/models") / f"{self.file_name}.py",
                 context,
             )
             self.copy_template(
-                "postgres/api/models/schemas/schema.py.jinja",
+                "default/api/models/schemas/schema.py.jinja",
                 Path("api/models/schemas") / f"{self.file_name}.py",
                 context,
             )
         else:
+            # Fallback if somehow using older layout
             self.copy_template(
-                "legacy/app/model/model.py.jinja",
+                "default/api/models/model.py.jinja",
                 Path("app/models") / f"{self.file_name}.py",
                 context,
             )
             self.copy_template(
-                "legacy/app/model/serializer.py.jinja",
-                Path("app/models/serializers") / f"{self.file_name}_serializer.py",
+                "default/api/models/schemas/schema.py.jinja",
+                Path("app/models/schemas") / f"{self.file_name}.py",
                 context,
             )
-            self._update_models_init()
 
-        test_path = Path("test/unit") / f"test_{self.file_name}.py"
-        if self._is_api_layout():
-            self.copy_template("postgres/api/models/model_test.py.jinja", test_path, context)
-        else:
-            self.copy_template("legacy/app/model/model_test.py.jinja", test_path, context)
+        test_dir = Path("test/unit/models")
+        test_dir.mkdir(parents=True, exist_ok=True)
+        test_path = test_dir / f"test_{self.file_name}.py"
+        self.copy_template("default/api/models/model_test.py.jinja", test_path, context)
 
     def _update_models_init(self) -> None:
         init_path = Path("app/models/__init__.py")

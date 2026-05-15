@@ -30,8 +30,7 @@ class ProjectGenerator(BaseGenerator):
         self.include_docker = include_docker
         self.extensions = extensions or []
         self.project_path = Path.cwd() / name
-        self.is_postgres = db_engine == "postgresql"
-        self._tpl_prefix = "postgres" if self.is_postgres else "legacy"
+        self._tpl_prefix = "default"
 
     def _tpl(self, relative: str) -> str:
         return f"{self._tpl_prefix}/{relative}"
@@ -47,12 +46,13 @@ class ProjectGenerator(BaseGenerator):
             "use_pgvector": "pgvector" in self.extensions,
         }
 
-        if self.is_postgres:
-            self._create_directories_postgres()
-            self._generate_postgres(context)
-        else:
-            self._create_directories_legacy()
-            self._generate_legacy(context)
+        self._create_directories()
+        self._generate_files(context)
+
+        # Automatically create .env from .env.example
+        env_example = self.project_path / ".env.example"
+        if env_example.exists():
+            (self.project_path / ".env").write_text(env_example.read_text())
 
         self._init_git_repository()
 
@@ -68,16 +68,19 @@ class ProjectGenerator(BaseGenerator):
             # Git missing or init failed — project files are still usable.
             pass
 
-    def _create_directories_postgres(self) -> None:
+    def _create_directories(self) -> None:
         dirs = [
             self.project_path / "api" / "models" / "schemas",
             self.project_path / "api" / "routers",
             self.project_path / "api" / "services",
             self.project_path / "api" / "dependencies",
+            self.project_path / "api" / "mailers",
             self.project_path / "core",
             self.project_path / "db" / "migrations" / "versions",
-            self.project_path / "test" / "unit",
-            self.project_path / "test" / "integration",
+            self.project_path / "test" / "unit" / "models",
+            self.project_path / "test" / "unit" / "services",
+            self.project_path / "test" / "unit" / "mailers",
+            self.project_path / "test" / "integration" / "routers",
             self.project_path / "test" / "fixtures",
         ]
         for dir_path in dirs:
@@ -86,24 +89,7 @@ class ProjectGenerator(BaseGenerator):
             if not init_file.exists():
                 init_file.write_text("")
 
-    def _create_directories_legacy(self) -> None:
-        dirs = [
-            self.project_path / "app" / "models" / "serializers",
-            self.project_path / "app" / "routers",
-            self.project_path / "app" / "services",
-            self.project_path / "app" / "lib",
-            self.project_path / "core",
-            self.project_path / "migrations" / "versions",
-            self.project_path / "logs",
-            self.project_path / "test" / "unit",
-            self.project_path / "test" / "integration",
-            self.project_path / "test" / "fixtures",
-        ]
-        for dir_path in dirs:
-            dir_path.mkdir(parents=True, exist_ok=True)
-            (dir_path / "__init__.py").touch()
-
-    def _generate_postgres(self, context: dict) -> None:
+    def _generate_files(self, context: dict) -> None:
         pairs = [
             ("main.py.jinja", self.project_path / "main.py"),
             ("core/config.py.jinja", self.project_path / "core" / "config.py"),
@@ -132,36 +118,6 @@ class ProjectGenerator(BaseGenerator):
         ]
         for rel, dest in pairs:
             self.copy_template(self._tpl(rel), dest, context)
-
-        if self.include_docker:
-            self.copy_template(self._tpl("Dockerfile.jinja"), self.project_path / "Dockerfile", context)
-            self.copy_template(self._tpl("docker-compose.yml.jinja"), self.project_path / "docker-compose.yml", context)
-            self.copy_template(self._tpl("dockerignore.jinja"), self.project_path / ".dockerignore", context)
-
-    def _generate_legacy(self, context: dict) -> None:
-        self.copy_template(self._tpl("core/config.py.jinja"), self.project_path / "core" / "config.py", context)
-        self.copy_template(self._tpl("core/database.py.jinja"), self.project_path / "core" / "database.py", context)
-        self.copy_template(self._tpl("core/__init__.py.jinja"), self.project_path / "core" / "__init__.py", context)
-
-        self.copy_template(self._tpl("app/main.py.jinja"), self.project_path / "main.py", context)
-        self.copy_template(self._tpl("app/model/base.py.jinja"), self.project_path / "app" / "models" / "base.py", context)
-        self.copy_template(self._tpl("app/router/init.py.jinja"), self.project_path / "app" / "routers" / "__init__.py", context)
-
-        self.copy_template(self._tpl("config/pyproject.toml.jinja"), self.project_path / "pyproject.toml", context)
-        self.copy_template(self._tpl("config/.env.example.jinja"), self.project_path / ".env.example", context)
-        self.copy_template(self._tpl("config/.gitignore.jinja"), self.project_path / ".gitignore", context)
-        self.copy_template(self._tpl("config/alembic.ini.jinja"), self.project_path / "alembic.ini", context)
-        self.copy_template(self._tpl("config/README.md.jinja"), self.project_path / "README.md", context)
-
-        self.copy_template(self._tpl("migrations/env.py.jinja"), self.project_path / "migrations" / "env.py", context)
-        self.copy_template(
-            self._tpl("migrations/script.py.mako.jinja"),
-            self.project_path / "migrations" / "script.py.mako",
-            context,
-        )
-
-        self.copy_template(self._tpl("test/conftest.py.jinja"), self.project_path / "test" / "conftest.py", context)
-        self.copy_template(self._tpl("test/init_test.py.jinja"), self.project_path / "test" / "init_test.py", context)
 
         if self.include_docker:
             self.copy_template(self._tpl("Dockerfile.jinja"), self.project_path / "Dockerfile", context)

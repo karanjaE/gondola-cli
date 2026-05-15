@@ -23,12 +23,13 @@ class ServiceGenerator(BaseGenerator):
         }
         if self._is_api_layout():
             service_path = Path("api/services") / f"{self.file_name}.py"
-            tpl = "postgres/api/services/service.py.jinja"
         else:
             service_path = Path("app/services") / f"{self.file_name}.py"
-            tpl = "postgres/api/services/service.py.jinja"
+        
+        tpl = "default/api/services/service.py.jinja"
         self.copy_template(tpl, service_path, context)
 
-        test_path = Path("test/unit") / f"test_{self.file_name}.py"
-        test_path.parent.mkdir(parents=True, exist_ok=True)
+        test_dir = Path("test/unit/services")
+        test_dir.mkdir(parents=True, exist_ok=True)
+        test_path = test_dir / f"test_{self.file_name}.py"
         test_path.write_text(f"# Test for {self.name} service\n")

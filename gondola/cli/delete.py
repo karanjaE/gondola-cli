@@ -32,14 +32,14 @@ def model(
         files_to_delete = [
             Path("api/models") / f"{file_name}.py",
             Path("api/models/schemas") / f"{file_name}.py",
-            Path("test/unit") / f"test_{file_name}.py",
+            Path("test/unit/models") / f"test_{file_name}.py",
         ]
         models_dir = Path("api/models")
     else:
         files_to_delete = [
             Path("app/models") / f"{file_name}.py",
             Path("app/models/serializers") / f"{file_name}_serializer.py",
-            Path("test/unit") / f"test_{file_name}.py",
+            Path("test/unit/models") / f"test_{file_name}.py",
         ]
         models_dir = Path("app/models")
 
@@ -139,7 +139,7 @@ def router(
 
     files_to_delete = [
         router_dir / f"{file_name}.py",
-        Path("test/integration") / f"test_{file_name}_routes.py",
+        Path("test/integration/routers") / f"test_{file_name}_routes.py",
     ]
 
     existing_files = [f for f in files_to_delete if f.exists()]

@@ -73,7 +73,6 @@ def project(
         console.print("\n[cyan]Next steps:[/cyan]")
         console.print(f"  cd {name}")
         console.print("  poetry install")
-        console.print("  cp .env.example .env")
         console.print("  # Configure your env file")
         console.print("  gondola migrate upgrade")
         console.print("  gondola run server")

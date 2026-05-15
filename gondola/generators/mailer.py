@@ -12,8 +12,8 @@ class MailerGenerator(BaseGenerator):
     
     def generate(self) -> None:
         """Generate mailer file and test."""
-        # Create lib/mailers directory if it doesn't exist
-        mailers_dir = Path("app/lib/mailers")
+        # Create api/mailers directory if it doesn't exist
+        mailers_dir = Path("api/mailers")
         mailers_dir.mkdir(parents=True, exist_ok=True)
         (mailers_dir / "__init__.py").touch()
         
@@ -24,9 +24,10 @@ class MailerGenerator(BaseGenerator):
         
         # Generate mailer
         mailer_path = mailers_dir / f"{self.file_name}.py"
-        self.copy_template("legacy/app/mailer/mailer.py.jinja", mailer_path, context)
+        self.copy_template("default/api/mailers/mailer.py.jinja", mailer_path, context)
         
         # Generate test
-        test_path = Path("test/unit") / f"test_{self.file_name}.py"
-        test_path.parent.mkdir(parents=True, exist_ok=True)
+        test_dir = Path("test/unit/mailers")
+        test_dir.mkdir(parents=True, exist_ok=True)
+        test_path = test_dir / f"test_{self.file_name}.py"
         test_path.write_text(f"# Test for {self.name} mailer\n")
