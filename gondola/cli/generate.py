@@ -8,6 +8,7 @@ from rich.console import Console
 from ..generators.mailer import MailerGenerator
 from ..generators.model import ModelGenerator
 from ..generators.router import RouterGenerator
+from ..generators.seed import SeedGenerator
 from ..generators.service import ServiceGenerator
 
 app = typer.Typer(help="Generate code components")
@@ -125,3 +126,31 @@ def migration(
     except subprocess.CalledProcessError as e:
         console.print(f"[red]Error creating migration: {e}[/red]")
         raise typer.Exit(1)
+
+
+@app.command()
+def seed(
+    name: str = typer.Argument(..., help="Seed name (e.g., User, BlogPost)"),
+) -> None:
+    """Generate a new database seed file."""
+
+    if not Path("db/seeds").exists() and not Path("db").exists():
+        console.print("[red]Error: Not in a FastAPI project directory[/red]")
+        raise typer.Exit(1)
+
+    from ..utils.string_utils import to_snake_case
+    file_name = to_snake_case(name)
+    seed_path = Path("db/seeds") / f"{file_name}_seed.py"
+
+    if seed_path.exists():
+        console.print(f"[yellow]Seed '{file_name}_seed.py' already exists.[/yellow]")
+        raise typer.Exit(1)
+
+    generator = SeedGenerator(name=name)
+    generator.generate()
+
+    console.print(f"[green]✓[/green] Seed '[bold]{file_name}_seed.py[/bold]' generated successfully!")
+    console.print("\n[cyan]Files created:[/cyan]")
+    console.print(f"  - db/seeds/{file_name}_seed.py")
+    console.print("\n[cyan]Run it with:[/cyan]")
+    console.print(f"  gondola db seed {file_name}")
