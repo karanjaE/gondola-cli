@@ -1,7 +1,7 @@
 import typer
 from rich.console import Console
 
-from .create import app as create_app
+from .create import project as init_command
 from .delete import app as delete_app
 from .generate import app as generate_app
 from .migrate import app as migrate_app
@@ -17,9 +17,9 @@ app = typer.Typer(
 
 console = Console()
 
-# ── gondola init / gondola i ───────────────────────────────────────────────
-app.add_typer(create_app, name="init", help="Create a new FastAPI project")
-app.add_typer(create_app, name="i", hidden=True)
+# ── gondola init / gondola i ──────────────────────────────────────────────
+app.command(name="init", help="Create a new FastAPI project (interactive)")(init_command)
+app.command(name="i", hidden=True)(init_command)
 
 # ── gondola generate / gondola g ──────────────────────────────────────────
 app.add_typer(generate_app, name="generate", help="Generate code components")

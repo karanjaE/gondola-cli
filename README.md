@@ -77,36 +77,78 @@ You should see the Gondola CLI help menu with available commands.
 
 ### Start a New Project
 
-`gondola init` (alias: `gondola i`) creates a new FastAPI project.
+`gondola init` (alias: `gondola i`) launches an **interactive wizard** to scaffold a new FastAPI project.
 
 ```bash
-# Default: PostgreSQL + Docker
-gondola init my-api
+gondola init
 # or with alias
-gondola i my-api
-
-# Explicit options
-gondola init my-api --db=postgres --docker
-
-# Skip Docker files
-gondola init my-api --no-docker
-
-# Different database engines
-gondola init my-api --db=sqlite
-gondola init my-api --db=mysql
-gondola init my-api --db=mariadb
-
-# PostgreSQL extensions
-gondola init my-api --db=postgres --extensions postgis,pgvector
+gondola i
 ```
 
-#### Options
+You can also pass a name directly to pre-fill the first prompt:
 
-| Option | Alias | Default | Description |
-|--------|-------|---------|-------------|
-| `--db` | `-d` | `postgres` | Database engine: `postgres`, `mysql`, `mariadb`, `sqlite` |
-| `--docker / --no-docker` | `-x` | `true` | Include Docker setup |
-| `--extensions` | `-e` | `""` | Comma-separated list of extensions (e.g. `postgis,pgvector`) |
+```bash
+gondola init my-api
+gondola i my-api
+```
+
+#### Interactive session example
+
+```
+╭─────────────────────────────────────────────╮
+│  gondola init — FastAPI project scaffolding  │
+╰─────────────────────────────────────────────╯
+
+  Project name [my-fastapi-project]: my-api
+
+  Database engine
+  > 1. PostgreSQL  (asyncpg + SQLModel — recommended)
+    2. MySQL       (asyncmy + SQLModel)
+    3. MariaDB     (asyncmy + SQLModel)
+    4. SQLite      (aiosqlite + SQLModel)
+  Enter number [1]:
+
+  Include Docker setup? [Y/n]: Y
+
+  Include PostgreSQL extensions? (postgis, pgvector) [y/N]: y
+
+  Select extensions
+    1. postgis
+    2. pgvector
+  Enter numbers separated by commas (e.g. 1,2), or press Enter to skip
+  Selection: 2
+
+╭─ Project configuration ─╮
+│  Project     my-api      │
+│  Database    postgres    │
+│  Docker      Yes         │
+│  Extensions  pgvector    │
+╰─────────────────────────╯
+
+  Create project? [Y/n]: Y
+```
+
+#### Prompts and defaults
+
+| Prompt | Default |
+|--------|---------|
+| Project name | `my-fastapi-project` |
+| Database engine | `postgres` |
+| Include Docker? | `Yes` |
+| Include extensions? | `No` |
+| Extensions | *(none)* |
+
+> **Note**: Project names are automatically normalized to `lowercase-with-hyphens`. Extensions (`postgis`, `pgvector`) are only applicable when using PostgreSQL.
+
+#### Non-interactive (scripted) usage
+
+All prompts can be bypassed by passing flags directly:
+
+```bash
+gondola init my-api --db postgres --docker --extensions pgvector
+gondola init my-api --db sqlite --no-docker
+gondola init my-api --db mysql
+```
 
 #### What gets created?
 
@@ -361,7 +403,7 @@ Removes `api/mailers/welcome.py` and `test/unit/mailers/test_welcome.py`.
 
 | Command | Alias | Description |
 |---------|-------|-------------|
-| `gondola init <name>` | `gondola i <name>` | Create a new FastAPI project |
+| `gondola init [name]` | `gondola i [name]` | Create a new FastAPI project (interactive wizard) |
 | `gondola start` | `gondola s` | Start the FastAPI server |
 | `gondola generate model <name>` | `gondola g model <name>` | Generate model + schema + test |
 | `gondola generate router <name>` | `gondola g router <name>` | Generate router + integration test |
