@@ -54,15 +54,28 @@ jobs:
               circleci-agent step halt
             fi
 
+            if [ -z "$GITHUB_TOKEN" ]; then
+              echo "ERROR: GITHUB_TOKEN is empty. Check that the 'github' context"
+              echo "is attached to this project and the token hasn't expired."
+              exit 1
+            fi
+
             PR_NUMBER=$(echo "$CIRCLE_PULL_REQUEST" | sed 's#.*/pull/##')
             REPO_SLUG=$(echo "$CIRCLE_PULL_REQUEST" | sed -E 's#https://github.com/([^/]+/[^/]+)/pull/.*#\1#')
 
-            API_RESPONSE=$(curl -s \
+            HTTP_STATUS=$(curl -s -o /tmp/pr_response.json -w "%{http_code}" \
               -H "Authorization: token ${GITHUB_TOKEN}" \
               -H "Accept: application/vnd.github+json" \
               "https://api.github.com/repos/${REPO_SLUG}/pulls/${PR_NUMBER}")
 
-            TARGET_BRANCH=$(echo "$API_RESPONSE" | python3 -c "import sys, json; data = json.load(sys.stdin); print(data['base']['ref'])")
+            if [ "$HTTP_STATUS" != "200" ]; then
+              echo "ERROR: GitHub API returned HTTP $HTTP_STATUS"
+              echo "Response body:"
+              cat /tmp/pr_response.json
+              exit 1
+            fi
+
+            TARGET_BRANCH=$(python3 -c "import json; print(json.load(open('/tmp/pr_response.json'))['base']['ref'])")
 
             echo "PR targets: $TARGET_BRANCH"
 
