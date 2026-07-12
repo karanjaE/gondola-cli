@@ -6,7 +6,23 @@ from pathlib import Path
 
 import pytest
 
-from gondola.generators.project import ProjectGenerator
+import gondola.generators.project as project_module
+from gondola.generators.project import ProjectGenerator, _FALLBACK_VERSIONS
+
+
+@pytest.fixture(autouse=True)
+def _patched_versions(monkeypatch):
+    """Avoid slow/flaky network calls to PyPI during project generation tests.
+
+    Real version lookups happen in the CLI (`gondola init`); these tests only
+    need deterministic generated output, so we substitute the bundled fallback
+    version pins instead of hitting the network for every package.
+    """
+    monkeypatch.setattr(
+        project_module,
+        "_fetch_versions",
+        lambda db_engine, extensions: dict(_FALLBACK_VERSIONS),
+    )
 
 
 class TestProjectGenerator:
@@ -65,7 +81,7 @@ class TestProjectGenerator:
             finally:
                 os.chdir(original_cwd)
 
-    def test_generate_sqlite_legacy_directory_structure(self):
+    def test_generate_sqlite_directory_structure(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             original_cwd = os.getcwd()
             try:
@@ -74,10 +90,19 @@ class TestProjectGenerator:
                 generator.generate()
 
                 project_path = Path(tmpdir) / "test_project"
-                assert (project_path / "app" / "models" / "serializers").exists()
-                assert (project_path / "app" / "routers").exists()
-                assert (project_path / "migrations").exists()
-                assert (project_path / "logs").exists()
+                # SQLite projects share the same modern layout as other engines.
+                assert (project_path / "api" / "models" / "schemas").exists()
+                assert (project_path / "api" / "routers").exists()
+                assert (project_path / "api" / "services").exists()
+                assert (project_path / "core").exists()
+                assert (project_path / "db" / "migrations" / "versions").exists()
+                assert (project_path / "test" / "unit").exists()
+                assert (project_path / "test" / "integration").exists()
+                assert (project_path / "test" / "fixtures").exists()
+
+                # The SQLite-specific dependency is recorded in pyproject.toml.
+                text = (project_path / "pyproject.toml").read_text()
+                assert "aiosqlite" in text
             finally:
                 os.chdir(original_cwd)
 
@@ -224,9 +249,12 @@ class TestProjectGenerator:
                 generator = ProjectGenerator("test_project", "sqlite")
                 generator.generate()
 
-                config_file = Path(tmpdir) / "test_project" / "core" / "config.py"
-                content = config_file.read_text()
-                assert "sqlite+aiosqlite" in content
+                # The SQLite driver is declared in pyproject.toml (config.py is
+                # engine-agnostic and validates the URL at runtime).
+                pyproject = Path(tmpdir) / "test_project" / "pyproject.toml"
+                content = pyproject.read_text()
+                assert "aiosqlite" in content
+                assert "asyncpg" not in content
             finally:
                 os.chdir(original_cwd)
 
