@@ -1,0 +1,159 @@
+version: 2.1
+
+# ─────────────────────────────────────────────────────────────────────────
+# IMPORTANT — this file alone does not restrict CircleCI to "PR opened"
+# events the way `on: pull_request` does in GitHub Actions. CircleCI's
+# native branch filters only see the *source* branch of a push, not the
+# PR's target branch, so the "only run on PRs into develop/main" part is
+# enforced two ways together:
+#
+#   1. Project Settings > Advanced > "Only build pull requests" (or,
+#      if you're on the GitHub App integration, Project Settings >
+#      Triggers > add a trigger with event "PR Opened" / "Non-draft
+#      PR opened"). This stops CircleCI from building plain branch
+#      pushes at all — only open PRs trigger a pipeline.
+#   2. The `determine-target` job below, which asks the GitHub API what
+#      branch the PR actually targets and fails fast (skips real work)
+#      if it isn't develop or main. This is what lets us tell "PR into
+#      develop" apart from "PR into main" inside the same config.
+#
+# You'll need a context (named "github" below) containing a GITHUB_TOKEN
+# with repo write access — used both to query the PR and, on main, to
+# push the version bump / changelog commit back.
+# ─────────────────────────────────────────────────────────────────────────
+
+executors:
+  python:
+    docker:
+      - image: cimg/python:3.14 # matches the version in the old GHA workflow
+    working_directory: ~/project
+
+commands:
+  poetry_install:
+    steps:
+      - restore_cache:
+          keys:
+            - poetry-deps-v1-{{ checksum "poetry.lock" }}
+      - run:
+          name: Install dependencies
+          command: poetry install
+      - save_cache:
+          key: poetry-deps-v1-{{ checksum "poetry.lock" }}
+          paths:
+            - ~/.cache/pypoetry
+
+jobs:
+  determine-target:
+    executor: python
+    steps:
+      - run:
+          name: Resolve PR target branch
+          command: |
+            if [ -z "$CIRCLE_PULL_REQUEST" ]; then
+              echo "Not running in a pull request context — nothing to do."
+              circleci-agent step halt
+            fi
+
+            PR_NUMBER=$(echo "$CIRCLE_PULL_REQUEST" | sed 's#.*/pull/##')
+            REPO_SLUG=$(echo "$CIRCLE_PULL_REQUEST" | sed -E 's#https://github.com/([^/]+/[^/]+)/pull/.*#\1#')
+
+            TARGET_BRANCH=$(curl -s \
+              -H "Authorization: token ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "https://api.github.com/repos/${REPO_SLUG}/pulls/${PR_NUMBER}" \
+              | python3 -c "import sys, json; print(json.load(sys.stdin)['base']['ref'])")
+
+            echo "PR targets: $TARGET_BRANCH"
+
+            if [ "$TARGET_BRANCH" != "develop" ] && [ "$TARGET_BRANCH" != "main" ]; then
+              echo "PR does not target develop or main — skipping pipeline."
+              circleci-agent step halt
+            fi
+
+            mkdir -p /tmp/workspace
+            echo "$TARGET_BRANCH" > /tmp/workspace/target_branch.txt
+      - persist_to_workspace:
+          root: /tmp/workspace
+          paths:
+            - target_branch.txt
+
+  test:
+    executor: python
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - poetry_install
+      - run:
+          name: Run tests
+          command: poetry run pytest --cov
+
+  lint:
+    executor: python
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - poetry_install
+      - run:
+          name: Run mypy
+          command: poetry run mypy gondola
+
+  version-and-changelog:
+    executor: python
+    steps:
+      - checkout
+      - attach_workspace:
+          at: /tmp/workspace
+      - run:
+          name: Only run on PRs targeting main
+          command: |
+            TARGET_BRANCH=$(cat /tmp/workspace/target_branch.txt)
+            if [ "$TARGET_BRANCH" != "main" ]; then
+              echo "Target is $TARGET_BRANCH, not main — skipping."
+              circleci-agent step halt
+            fi
+      - poetry_install
+      - run:
+          name: Install commitizen
+          command: poetry run pip install commitizen
+      - run:
+          name: Configure git
+          command: |
+            git config user.email "ci-bot@gondola-cli.dev"
+            git config user.name "gondola-ci-bot"
+      - run:
+          name: Bump version and update changelog
+          command: |
+            # Bumps version in pyproject.toml based on conventional commits
+            # and writes/updates CHANGELOG.md. Requires commitizen config
+            # in pyproject.toml (see note below).
+            poetry run cz bump --changelog --yes
+      - run:
+          name: Push version bump back to PR branch
+          command: |
+            git push https://x-access-token:${GITHUB_TOKEN}@github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git HEAD:${CIRCLE_BRANCH}
+            git push https://x-access-token:${GITHUB_TOKEN}@github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git --tags
+
+workflows:
+  pull-request-checks:
+    jobs:
+      - determine-target:
+          context:
+            - github
+      - test:
+          requires:
+            - determine-target
+          context:
+            - github
+      - lint:
+          requires:
+            - determine-target
+          context:
+            - github
+      - version-and-changelog:
+          requires:
+            - test
+            - lint
+          context:
+            - github
