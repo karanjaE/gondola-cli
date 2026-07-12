@@ -100,7 +100,7 @@ class ProjectGenerator(BaseGenerator):
         return f"{self._tpl_prefix}/{relative}"
 
     def generate(self) -> None:
-        versions = self.versions or _fetch_versions(self.db_engine, self.extensions)
+        versions = self.versions if self.versions is not None else _fetch_versions(self.db_engine, self.extensions)
 
         context = {
             "project_name": self.name,

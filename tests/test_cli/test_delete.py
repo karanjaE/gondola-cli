@@ -28,8 +28,10 @@ def tmp_project():
             (Path(tmpdir) / "app" / "routers").mkdir(parents=True)
             (Path(tmpdir) / "test").mkdir()
             (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
+            (Path(tmpdir) / "test" / "unit" / "models").mkdir(parents=True)
             (Path(tmpdir) / "test" / "integration").mkdir(parents=True)
-            
+            (Path(tmpdir) / "test" / "integration" / "routers").mkdir(parents=True)
+
             yield tmpdir
         finally:
             os.chdir(original_cwd)
@@ -67,25 +69,25 @@ def test_delete_model_with_files(tmp_project):
         # Create model files
         model_file = Path(tmp_project) / "app" / "models" / "user.py"
         serializer_file = Path(tmp_project) / "app" / "models" / "serializers" / "user_serializer.py"
-        test_file = Path(tmp_project) / "test" / "unit" / "test_user.py"
-        
+        test_file = Path(tmp_project) / "test" / "unit" / "models" / "test_user.py"
+
         model_file.write_text("# User model")
         serializer_file.write_text("# User serializer")
         test_file.write_text("# User tests")
-        
+
         # Create __init__.py with import
         init_file = Path(tmp_project) / "app" / "models" / "__init__.py"
         init_file.write_text("from .user import User\n")
-        
+
         result = runner.invoke(app, ["delete", "model", "User", "--force"])
         assert result.exit_code == 0
         assert "Model 'User' deleted successfully" in strip_ansi(result.stdout)
-        
+
         # Check files were deleted
         assert not model_file.exists()
         assert not serializer_file.exists()
         assert not test_file.exists()
-        
+
         # Check import was removed
         assert "from .user import User" not in init_file.read_text()
     finally:
@@ -144,15 +146,15 @@ def test_delete_router_with_files(tmp_project):
         os.chdir(tmp_project)
         # Create router files
         router_file = Path(tmp_project) / "app" / "routers" / "user.py"
-        test_file = Path(tmp_project) / "test" / "integration" / "test_user_routes.py"
-        
+        test_file = Path(tmp_project) / "test" / "integration" / "routers" / "test_user_routes.py"
+
         router_file.write_text("# User router")
         test_file.write_text("# User router tests")
-        
+
         result = runner.invoke(app, ["delete", "router", "User", "--force"])
         assert result.exit_code == 0
         assert "Router 'User' deleted successfully" in strip_ansi(result.stdout)
-        
+
         # Check files were deleted
         assert not router_file.exists()
         assert not test_file.exists()

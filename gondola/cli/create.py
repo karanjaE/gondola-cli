@@ -89,6 +89,7 @@ def project(
     db: Optional[str] = typer.Option(None, "--db", "-d", help="Database engine (postgres, mysql, mariadb, sqlite)"),
     docker: Optional[bool] = typer.Option(None, "--docker/--no-docker", "-x/-X", help="Include Docker setup"),
     extensions: Optional[str] = typer.Option(None, "--extensions", "-e", help="Extensions (comma-separated)"),
+    no_fetch: bool = typer.Option(False, "--no-fetch", help="Skip fetching latest package versions from PyPI"),
 ) -> None:
     """Initialize a new FastAPI project (interactive by default)."""
 
@@ -175,15 +176,18 @@ def project(
     db_engine = "postgresql" if db in ("postgres", "postgresql") else db
 
     # ── Fetch latest package versions from PyPI ───────────────────────────
-    console.print()
-    with Progress(
-        SpinnerColumn(),
-        TextColumn("[progress.description]{task.description}"),
-        console=console,
-    ) as progress:
-        progress.add_task(description="Fetching latest package versions...", total=None)
-        from ..generators.project import _fetch_versions
-        versions = _fetch_versions(db_engine, ext_list)
+    if no_fetch:
+        versions = {}
+    else:
+        console.print()
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            progress.add_task(description="Fetching latest package versions...", total=None)
+            from ..generators.project import _fetch_versions
+            versions = _fetch_versions(db_engine, ext_list)
 
     # ── Generate project files ─────────────────────────────────────────────
     with Progress(
