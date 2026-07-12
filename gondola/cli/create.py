@@ -47,7 +47,7 @@ def _select(prompt_text: str, choices: list[str], labels: Optional[dict[str, str
 
     while True:
         raw = Prompt.ask(
-            f"  [dim]Enter number[/dim]",
+            "  [dim]Enter number[/dim]",
             default=str(default_index + 1),
             console=console,
         )

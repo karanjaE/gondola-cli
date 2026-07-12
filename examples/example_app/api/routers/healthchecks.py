@@ -13,7 +13,7 @@ router = APIRouter(tags=["health"])
 
 
 @router.get("/health/db")
-async def health_check(session: AsyncSession = Depends(get_db)):
+async def health_check_db(session: AsyncSession = Depends(get_db)):
     """Check if the database is healthy.
 
     Args:

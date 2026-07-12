@@ -12,7 +12,6 @@ gondola db init
 import re
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 from typing import Optional
 from urllib.parse import urlparse

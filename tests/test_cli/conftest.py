@@ -5,7 +5,6 @@ import re
 from pathlib import Path
 import pytest
 from typer.testing import CliRunner
-from gondola.cli.main import app
 
 
 def strip_ansi(text: str) -> str:

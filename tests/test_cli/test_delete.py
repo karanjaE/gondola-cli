@@ -4,7 +4,6 @@ import pytest
 import tempfile
 from pathlib import Path
 from typer.testing import CliRunner
-from unittest.mock import patch
 from gondola.cli.main import app
 from tests.test_cli.conftest import strip_ansi
 

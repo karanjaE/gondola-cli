@@ -1,8 +1,6 @@
 """Tests for BaseGenerator."""
 import tempfile
-import os
 from pathlib import Path
-import pytest
 from gondola.generators.base import BaseGenerator
 
 
