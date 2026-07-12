@@ -12,7 +12,7 @@ Gondola is a command-line tool designed to streamline FastAPI development by pro
 
 **Convention Over Configuration**: Gondola establishes sensible defaults and project structures so you can start building immediately. Opinionated where it matters, flexible where you need it.
 
-**Developer Happiness**: Reduce cognitive load with intuitive commands, clear project organization, and automatic test generation. If you've used Rails, you'll feel right at home.
+**Developer Happiness**: Reduce cognitive load with intuitive commands, clear project organization, and automatic test generation.
 
 **Modern Async-First**: Built for Python 3.12+ with async/await patterns. The default PostgreSQL stack uses SQLModel, **asyncpg**, and Alembic.
 
