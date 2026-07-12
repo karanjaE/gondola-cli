@@ -1,5 +1,7 @@
 import subprocess
 from pathlib import Path
+from typing import Optional
+
 import typer
 from rich.console import Console
 
@@ -7,37 +9,26 @@ app = typer.Typer(help="Database migration commands")
 console = Console()
 
 
-@app.command()
-def create(
-    message: str = typer.Argument(..., help="Migration message"),
-):
-    """Create a new migration."""
+def _assert_alembic() -> None:
     if not Path("alembic.ini").exists():
         console.print("[red]Error: Not in a FastAPI project with Alembic[/red]")
-        raise typer.Exit(1)
-    
-    try:
-        subprocess.run(
-            ["alembic", "revision", "--autogenerate", "-m", message],
-            check=True,
-        )
-        console.print(f"[green]✓[/green] Migration created: {message}")
-    except subprocess.CalledProcessError as e:
-        console.print(f"[red]Error creating migration: {e}[/red]")
         raise typer.Exit(1)
 
 
 @app.command()
-def upgrade(
-    revision: str = typer.Argument("head", help="Target revision"),
-):
-    """Run migrations."""
-    if not Path("alembic.ini").exists():
-        console.print("[red]Error: Not in a FastAPI project with Alembic[/red]")
-        raise typer.Exit(1)
-    
+def up(
+    revision: Optional[str] = typer.Option(
+        None,
+        "--revision",
+        "-r",
+        help="Target revision hash (defaults to 'head')",
+    ),
+) -> None:
+    """Apply migrations (upgrade)."""
+    _assert_alembic()
+    target = revision or "head"
     try:
-        subprocess.run(["alembic", "upgrade", revision], check=True)
+        subprocess.run(["alembic", "upgrade", target], check=True)
         console.print("[green]✓[/green] Migrations applied successfully")
     except subprocess.CalledProcessError as e:
         console.print(f"[red]Error running migrations: {e}[/red]")
@@ -45,29 +36,29 @@ def upgrade(
 
 
 @app.command()
-def downgrade(
-    revision: str = typer.Argument("-1", help="Target revision"),
-):
-    """Rollback migrations."""
-    if not Path("alembic.ini").exists():
-        console.print("[red]Error: Not in a FastAPI project with Alembic[/red]")
-        raise typer.Exit(1)
-    
+def down(
+    revision: Optional[str] = typer.Option(
+        None,
+        "--revision",
+        "-r",
+        help="Target revision hash (defaults to rolling back one revision)",
+    ),
+) -> None:
+    """Rollback migrations (downgrade)."""
+    _assert_alembic()
+    target = revision or "-1"
     try:
-        subprocess.run(["alembic", "downgrade", revision], check=True)
+        subprocess.run(["alembic", "downgrade", target], check=True)
         console.print("[green]✓[/green] Migration rolled back successfully")
     except subprocess.CalledProcessError as e:
         console.print(f"[red]Error rolling back migration: {e}[/red]")
         raise typer.Exit(1)
 
 
-@app.command()
-def history():
+@app.command(name="history")
+def history() -> None:
     """Show migration history."""
-    if not Path("alembic.ini").exists():
-        console.print("[red]Error: Not in a FastAPI project with Alembic[/red]")
-        raise typer.Exit(1)
-    
+    _assert_alembic()
     try:
         subprocess.run(["alembic", "history"], check=True)
     except subprocess.CalledProcessError as e:
@@ -75,15 +66,26 @@ def history():
         raise typer.Exit(1)
 
 
-@app.command()
-def current():
-    """Show current migration."""
-    if not Path("alembic.ini").exists():
-        console.print("[red]Error: Not in a FastAPI project with Alembic[/red]")
-        raise typer.Exit(1)
-    
+# Alias: gondola migrate h
+@app.command(name="h", hidden=True)
+def history_alias() -> None:
+    """Alias for 'history'."""
+    history()
+
+
+@app.command(name="current")
+def current() -> None:
+    """Show current migration revision."""
+    _assert_alembic()
     try:
         subprocess.run(["alembic", "current"], check=True)
     except subprocess.CalledProcessError as e:
         console.print(f"[red]Error showing current migration: {e}[/red]")
         raise typer.Exit(1)
+
+
+# Alias: gondola migrate c
+@app.command(name="c", hidden=True)
+def current_alias() -> None:
+    """Alias for 'current'."""
+    current()

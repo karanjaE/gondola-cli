@@ -2,7 +2,6 @@
 import tempfile
 import os
 from pathlib import Path
-import pytest
 from gondola.generators.service import ServiceGenerator
 
 
@@ -36,7 +35,7 @@ class TestServiceGenerator:
                 os.chdir(tmpdir)
                 # Create required directories
                 (Path(tmpdir) / "app" / "services").mkdir(parents=True)
-                (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "unit" / "services").mkdir(parents=True)
                 
                 generator = ServiceGenerator("EmailService")
                 generator.generate()
@@ -46,7 +45,7 @@ class TestServiceGenerator:
                 assert service_file.exists()
                 
                 # Check test file
-                test_file = Path(tmpdir) / "test" / "unit" / "test_email_service.py"
+                test_file = Path(tmpdir) / "test" / "unit" / "services" / "test_email_service.py"
                 assert test_file.exists()
             finally:
                 os.chdir(original_cwd)
@@ -79,14 +78,32 @@ class TestServiceGenerator:
                 os.chdir(tmpdir)
                 # Create required directories
                 (Path(tmpdir) / "app" / "services").mkdir(parents=True)
-                (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "unit" / "services").mkdir(parents=True)
                 
                 generator = ServiceGenerator("EmailService")
                 generator.generate()
                 
-                test_file = Path(tmpdir) / "test" / "unit" / "test_email_service.py"
+                test_file = Path(tmpdir) / "test" / "unit" / "services" / "test_email_service.py"
                 assert test_file.exists()
                 content = test_file.read_text()
                 assert "Emailservice" in content
+            finally:
+                os.chdir(original_cwd)
+
+
+class TestServiceGeneratorPostgresLayout:
+    def test_generate_writes_api_services(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(tmpdir)
+                (Path(tmpdir) / "api" / "services").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
+
+                ServiceGenerator("EmailService").generate()
+
+                path = Path(tmpdir) / "api" / "services" / "email_service.py"
+                assert path.exists()
+                assert "Emailservice" in path.read_text()
             finally:
                 os.chdir(original_cwd)

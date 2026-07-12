@@ -1,0 +1,62 @@
+[tool.poetry]
+name = "{{ project_slug }}"
+version = "0.1.0"
+description = "HTTP API for {{ project_name }}"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+fastapi = {extras = ["standard"], version = "^{{ versions['fastapi'] }}"}
+uvicorn = "^{{ versions['uvicorn'] }}"
+sqlmodel = "^{{ versions['sqlmodel'] }}"
+alembic = "^{{ versions['alembic'] }}"
+pydantic = "^{{ versions['pydantic'] }}"
+pydantic-settings = "^{{ versions['pydantic-settings'] }}"
+greenlet = "^{{ versions['greenlet'] }}"
+{% if db_engine == 'postgresql' %}
+asyncpg = "^{{ versions['asyncpg'] }}"
+psycopg2-binary = "^{{ versions['psycopg2-binary'] }}"
+{% elif db_engine == 'mysql' %}
+asyncmy = "^{{ versions['asyncmy'] }}"
+cryptography = "^{{ versions['cryptography'] }}"
+{% else %}
+aiosqlite = "^{{ versions['aiosqlite'] }}"
+{% endif %}
+{% if use_postgis %}
+geoalchemy2 = "^{{ versions['geoalchemy2'] }}"
+{% endif %}
+{% if use_pgvector %}
+pgvector = "^{{ versions['pgvector'] }}"
+{% endif %}
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^{{ versions['pytest'] }}"
+pytest-asyncio = "^{{ versions['pytest-asyncio'] }}"
+pytest-cov = "^{{ versions['pytest-cov'] }}"
+httpx = "^{{ versions['httpx'] }}"
+mypy = "^{{ versions['mypy'] }}"
+ruff = "^{{ versions['ruff'] }}"
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["test"]
+python_files = ["test_*.py", "*_test.py"]
+
+[tool.fastapi]
+entrypoint = "main:app"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

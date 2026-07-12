@@ -2,7 +2,6 @@
 import tempfile
 import os
 from pathlib import Path
-import pytest
 from gondola.generators.model import ModelGenerator
 
 
@@ -49,14 +48,14 @@ class TestModelGenerator:
         assert generator.fields[1] == ("email", "str")
     
     def test_generate_creates_files(self):
-        """Test that generate creates all required files."""
+        """Test that generate creates all required files (legacy app/models layout)."""
         with tempfile.TemporaryDirectory() as tmpdir:
             original_cwd = os.getcwd()
             try:
                 os.chdir(tmpdir)
-                # Create required directories
+                # Create required directories (legacy app/models layout)
                 (Path(tmpdir) / "app" / "models").mkdir(parents=True)
-                (Path(tmpdir) / "app" / "models" / "serializers").mkdir(parents=True)
+                (Path(tmpdir) / "app" / "models" / "schemas").mkdir(parents=True)
                 (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
                 
                 generator = ModelGenerator("User", "name:str,email:str")
@@ -66,46 +65,44 @@ class TestModelGenerator:
                 model_file = Path(tmpdir) / "app" / "models" / "user.py"
                 assert model_file.exists()
                 
-                # Check serializer file
-                serializer_file = Path(tmpdir) / "app" / "models" / "serializers" / "user_serializer.py"
-                assert serializer_file.exists()
+                # Check schema file
+                schema_file = Path(tmpdir) / "app" / "models" / "schemas" / "user.py"
+                assert schema_file.exists()
                 
                 # Check test file
-                test_file = Path(tmpdir) / "test" / "unit" / "test_user.py"
+                test_file = Path(tmpdir) / "test" / "unit" / "models" / "test_user.py"
                 assert test_file.exists()
             finally:
                 os.chdir(original_cwd)
     
-    def test_generate_updates_init(self):
-        """Test that generate updates __init__.py."""
+    def test_generate_does_not_update_init(self):
+        """generate() must not auto-create app/models/__init__.py (removed in layout consolidation)."""
         with tempfile.TemporaryDirectory() as tmpdir:
             original_cwd = os.getcwd()
             try:
                 os.chdir(tmpdir)
                 # Create required directories
                 (Path(tmpdir) / "app" / "models").mkdir(parents=True)
-                (Path(tmpdir) / "app" / "models" / "serializers").mkdir(parents=True)
+                (Path(tmpdir) / "app" / "models" / "schemas").mkdir(parents=True)
                 (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
                 
                 generator = ModelGenerator("User")
                 generator.generate()
                 
                 init_file = Path(tmpdir) / "app" / "models" / "__init__.py"
-                assert init_file.exists()
-                content = init_file.read_text()
-                assert "from .user import User" in content
+                assert not init_file.exists()
             finally:
                 os.chdir(original_cwd)
     
-    def test_generate_appends_to_existing_init(self):
-        """Test that generate appends to existing __init__.py."""
+    def test_generate_does_not_modify_existing_init(self):
+        """generate() must not append imports to an existing app/models/__init__.py."""
         with tempfile.TemporaryDirectory() as tmpdir:
             original_cwd = os.getcwd()
             try:
                 os.chdir(tmpdir)
                 # Create required directories
                 (Path(tmpdir) / "app" / "models").mkdir(parents=True)
-                (Path(tmpdir) / "app" / "models" / "serializers").mkdir(parents=True)
+                (Path(tmpdir) / "app" / "models" / "schemas").mkdir(parents=True)
                 (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
                 
                 # Create existing __init__.py
@@ -117,33 +114,73 @@ class TestModelGenerator:
                 
                 content = init_file.read_text()
                 assert "from .other import Other" in content
-                assert "from .user import User" in content
+                assert "from .user import User" not in content
             finally:
                 os.chdir(original_cwd)
     
-    def test_generate_no_duplicate_imports(self):
-        """Test that generate doesn't add duplicate imports."""
+    def test_generate_does_not_add_init_imports(self):
+        """generate() must not add model imports to __init__.py, even when run twice."""
         with tempfile.TemporaryDirectory() as tmpdir:
             original_cwd = os.getcwd()
             try:
                 os.chdir(tmpdir)
                 # Create required directories
                 (Path(tmpdir) / "app" / "models").mkdir(parents=True)
-                (Path(tmpdir) / "app" / "models" / "serializers").mkdir(parents=True)
+                (Path(tmpdir) / "app" / "models" / "schemas").mkdir(parents=True)
                 (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
+                
+                # Create existing __init__.py
+                init_file = Path(tmpdir) / "app" / "models" / "__init__.py"
+                init_file.write_text("from .other import Other\n")
                 
                 generator = ModelGenerator("User")
                 generator.generate()
-                
-                init_file = Path(tmpdir) / "app" / "models" / "__init__.py"
                 content1 = init_file.read_text()
                 
                 # Generate again
                 generator.generate()
                 content2 = init_file.read_text()
                 
-                # Should not have duplicate imports
-                assert content1.count("from .user import User") == 1
-                assert content2.count("from .user import User") == 1
+                # Should be untouched and contain no model import
+                assert content1 == content2
+                assert "from .user import User" not in content1
+            finally:
+                os.chdir(original_cwd)
+
+
+class TestModelGeneratorPostgresLayout:
+    """ModelGenerator when api/models exists (PostgreSQL-style layout)."""
+
+    def test_generate_creates_model_and_schema(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(tmpdir)
+                (Path(tmpdir) / "api" / "models" / "schemas").mkdir(parents=True)
+                (Path(tmpdir) / "api" / "models" / "schemas" / "__init__.py").touch()
+                (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
+
+                generator = ModelGenerator("User", "name:str,email:str")
+                generator.generate()
+
+                assert (Path(tmpdir) / "api" / "models" / "user.py").exists()
+                assert (Path(tmpdir) / "api" / "models" / "schemas" / "user.py").exists()
+                assert (Path(tmpdir) / "test" / "unit" / "models" / "test_user.py").exists()
+            finally:
+                os.chdir(original_cwd)
+
+    def test_generate_does_not_require_models_init(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(tmpdir)
+                (Path(tmpdir) / "api" / "models" / "schemas").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
+
+                ModelGenerator("Item").generate()
+
+                init_path = Path(tmpdir) / "api" / "models" / "__init__.py"
+                if init_path.exists():
+                    assert "from .item import Item" not in init_path.read_text()
             finally:
                 os.chdir(original_cwd)

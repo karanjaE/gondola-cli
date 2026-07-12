@@ -1,6 +1,13 @@
 import typer
 from rich.console import Console
 
+from .create import project as init_command
+from .db import app as db_app
+from .delete import app as delete_app
+from .generate import app as generate_app
+from .migrate import app as migrate_app
+from .server import start as start_command
+
 app = typer.Typer(
     name="gondola",
     help="Console tool for FastAPI",
@@ -11,24 +18,28 @@ app = typer.Typer(
 
 console = Console()
 
-# Subcommands
-from .create import app as create_app
-from .generate import app as generate_app
-from .delete import app as delete_app
-from .migrate import app as migrate_app
-from .server import app as server_app
+# ── gondola init / gondola i ──────────────────────────────────────────────
+app.command(name="init", help="Create a new FastAPI project (interactive)")(init_command)
+app.command(name="i", hidden=True)(init_command)
 
-app.add_typer(create_app, name="create")
-app.add_typer(generate_app, name="generate")
-app.add_typer(delete_app, name="delete")
-app.add_typer(migrate_app, name="migrate")
-app.add_typer(server_app, name="run")
+# ── gondola generate / gondola g ──────────────────────────────────────────
+app.add_typer(generate_app, name="generate", help="Generate code components")
+app.add_typer(generate_app, name="g", hidden=True)
 
-if __name__ == "__main__":
-    app()
+# ── gondola delete / gondola d ────────────────────────────────────────────
+app.add_typer(delete_app, name="delete", help="Delete generated code")
+app.add_typer(delete_app, name="d", hidden=True)
 
+# ── gondola migrate ───────────────────────────────────────────────────────
+app.add_typer(migrate_app, name="migrate", help="Database migration commands")
 
-from .main import app
+# ── gondola db ────────────────────────────────────────────────────────────
+app.add_typer(db_app, name="db", help="Database management commands")
+
+# ── gondola start / gondola s ─────────────────────────────────────────────
+app.command(name="start", help="Start the FastAPI server")(start_command)
+app.command(name="s", hidden=True)(start_command)
+
 
 if __name__ == "__main__":
     app()

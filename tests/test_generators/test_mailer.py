@@ -2,7 +2,6 @@
 import tempfile
 import os
 from pathlib import Path
-import pytest
 from gondola.generators.mailer import MailerGenerator
 
 
@@ -27,15 +26,15 @@ class TestMailerGenerator:
             original_cwd = os.getcwd()
             try:
                 os.chdir(tmpdir)
-                # Create app directory
-                (Path(tmpdir) / "app").mkdir(parents=True)
+                # Create api directory
+                (Path(tmpdir) / "api").mkdir(parents=True)
                 (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
                 
                 generator = MailerGenerator("Welcome")
                 generator.generate()
                 
                 # Check that mailers directory was created
-                mailers_dir = Path(tmpdir) / "app" / "lib" / "mailers"
+                mailers_dir = Path(tmpdir) / "api" / "mailers"
                 assert mailers_dir.exists()
                 assert (mailers_dir / "__init__.py").exists()
             finally:
@@ -47,19 +46,19 @@ class TestMailerGenerator:
             original_cwd = os.getcwd()
             try:
                 os.chdir(tmpdir)
-                # Create app directory
-                (Path(tmpdir) / "app").mkdir(parents=True)
+                # Create api directory
+                (Path(tmpdir) / "api").mkdir(parents=True)
                 (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
                 
                 generator = MailerGenerator("Welcome")
                 generator.generate()
                 
                 # Check mailer file
-                mailer_file = Path(tmpdir) / "app" / "lib" / "mailers" / "welcome.py"
+                mailer_file = Path(tmpdir) / "api" / "mailers" / "welcome.py"
                 assert mailer_file.exists()
                 
                 # Check test file
-                test_file = Path(tmpdir) / "test" / "unit" / "test_welcome.py"
+                test_file = Path(tmpdir) / "test" / "unit" / "mailers" / "test_welcome.py"
                 assert test_file.exists()
             finally:
                 os.chdir(original_cwd)
@@ -70,14 +69,14 @@ class TestMailerGenerator:
             original_cwd = os.getcwd()
             try:
                 os.chdir(tmpdir)
-                # Create app directory
-                (Path(tmpdir) / "app").mkdir(parents=True)
+                # Create api directory
+                (Path(tmpdir) / "api").mkdir(parents=True)
                 (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
                 
                 generator = MailerGenerator("Welcome")
                 generator.generate()
                 
-                mailer_file = Path(tmpdir) / "app" / "lib" / "mailers" / "welcome.py"
+                mailer_file = Path(tmpdir) / "api" / "mailers" / "welcome.py"
                 assert mailer_file.exists()
                 content = mailer_file.read_text()
                 assert "Welcome" in content
@@ -90,14 +89,14 @@ class TestMailerGenerator:
             original_cwd = os.getcwd()
             try:
                 os.chdir(tmpdir)
-                # Create app directory
-                (Path(tmpdir) / "app").mkdir(parents=True)
+                # Create api directory
+                (Path(tmpdir) / "api").mkdir(parents=True)
                 (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
                 
                 generator = MailerGenerator("Welcome")
                 generator.generate()
                 
-                test_file = Path(tmpdir) / "test" / "unit" / "test_welcome.py"
+                test_file = Path(tmpdir) / "test" / "unit" / "mailers" / "test_welcome.py"
                 assert test_file.exists()
                 content = test_file.read_text()
                 assert "Welcome" in content
@@ -110,12 +109,12 @@ class TestMailerGenerator:
             original_cwd = os.getcwd()
             try:
                 os.chdir(tmpdir)
-                # Create app directory
-                (Path(tmpdir) / "app").mkdir(parents=True)
+                # Create api directory
+                (Path(tmpdir) / "api").mkdir(parents=True)
                 (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
                 
                 # Create existing __init__.py
-                mailers_dir = Path(tmpdir) / "app" / "lib" / "mailers"
+                mailers_dir = Path(tmpdir) / "api" / "mailers"
                 mailers_dir.mkdir(parents=True)
                 init_file = mailers_dir / "__init__.py"
                 init_file.write_text("existing_content\n")
@@ -123,8 +122,8 @@ class TestMailerGenerator:
                 generator = MailerGenerator("Welcome")
                 generator.generate()
                 
-                # Should still exist and not be overwritten
+                # Should still exist and content preserved (touch() does not truncate)
                 assert init_file.exists()
-                # The touch() call might overwrite, but let's check it exists
+                assert init_file.read_text() == "existing_content\n"
             finally:
                 os.chdir(original_cwd)

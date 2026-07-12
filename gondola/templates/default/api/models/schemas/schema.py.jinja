@@ -1,0 +1,39 @@
+from typing import Optional
+import uuid
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
+
+
+class {{ model_name }}Base(BaseModel):
+    """Base fields for {{ model_name }}."""
+    model_config = ConfigDict(from_attributes=True)
+    {% for field_name, field_type in fields %}
+    {{ field_name }}: {% if field_type == "str" %}str{% elif field_type == "int" %}int{% elif field_type == "float" %}float{% elif field_type == "bool" %}bool{% else %}{{ field_type }}{% endif %}
+    {% endfor %}
+    {% if not fields %}
+    pass
+    {% endif %}
+
+
+class {{ model_name }}Create({{ model_name }}Base):
+    """Payload for creating {{ model_name }}."""
+    pass
+
+
+class {{ model_name }}Update(BaseModel):
+    """Payload for partial updates."""
+    model_config = ConfigDict(from_attributes=True)
+    {% for field_name, field_type in fields %}
+    {{ field_name }}: Optional[{% if field_type == "str" %}str{% elif field_type == "int" %}int{% elif field_type == "float" %}float{% elif field_type == "bool" %}bool{% else %}{{ field_type }}{% endif %}] = None
+    {% endfor %}
+    {% if not fields %}
+    pass
+    {% endif %}
+
+
+class {{ model_name }}Read({{ model_name }}Base):
+    """Returned {{ model_name }} representation."""
+    id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime

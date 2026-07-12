@@ -15,13 +15,14 @@ def test_create_project():
             os.chdir(tmpdir)
             result = runner.invoke(
                 app,
-                ["create", "project", "test_project"],
+                ["init", "test-project", "--db", "sqlite", "--no-docker", "--extensions", "", "--no-fetch"],
+                input="y\n",
             )
         finally:
             os.chdir(original_cwd)
-        
+
         assert result.exit_code == 0
-        project_path = Path(tmpdir) / "test_project"
+        project_path = Path(tmpdir) / "test-project"
         assert project_path.exists()
         assert (project_path / "main.py").exists()
         assert (project_path / "pyproject.toml").exists()

@@ -2,7 +2,6 @@
 import tempfile
 import os
 from pathlib import Path
-import pytest
 from gondola.generators.router import RouterGenerator
 
 
@@ -50,7 +49,7 @@ class TestRouterGenerator:
                 os.chdir(tmpdir)
                 # Create required directories
                 (Path(tmpdir) / "app" / "routers").mkdir(parents=True)
-                (Path(tmpdir) / "test" / "integration").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "integration" / "routers").mkdir(parents=True)
                 
                 generator = RouterGenerator("User")
                 generator.generate()
@@ -60,7 +59,7 @@ class TestRouterGenerator:
                 assert router_file.exists()
                 
                 # Check test file
-                test_file = Path(tmpdir) / "test" / "integration" / "test_user_routes.py"
+                test_file = Path(tmpdir) / "test" / "integration" / "routers" / "test_user_routes.py"
                 assert test_file.exists()
             finally:
                 os.chdir(original_cwd)
@@ -96,14 +95,30 @@ class TestRouterGenerator:
                 os.chdir(tmpdir)
                 # Create required directories
                 (Path(tmpdir) / "app" / "routers").mkdir(parents=True)
-                (Path(tmpdir) / "test" / "integration").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "integration" / "routers").mkdir(parents=True)
                 
                 generator = RouterGenerator("User")
                 generator.generate()
                 
-                test_file = Path(tmpdir) / "test" / "integration" / "test_user_routes.py"
+                test_file = Path(tmpdir) / "test" / "integration" / "routers" / "test_user_routes.py"
                 assert test_file.exists()
                 content = test_file.read_text()
                 assert "User" in content
+            finally:
+                os.chdir(original_cwd)
+
+
+class TestRouterGeneratorPostgresLayout:
+    def test_generate_creates_api_router(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            original_cwd = os.getcwd()
+            try:
+                os.chdir(tmpdir)
+                (Path(tmpdir) / "api" / "routers").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "integration").mkdir(parents=True)
+
+                RouterGenerator("User").generate()
+
+                assert (Path(tmpdir) / "api" / "routers" / "user.py").exists()
             finally:
                 os.chdir(original_cwd)

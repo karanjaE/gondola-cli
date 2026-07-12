@@ -1,0 +1,12 @@
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
+class {{ service_name }}:
+    """{{ service_name }} — application service / use-case layer."""
+
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def execute(self) -> None:
+        """Run the main operation for this service."""
+        pass

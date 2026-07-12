@@ -1,0 +1,38 @@
+"""
+Example seed file — demonstrates how to write a database seed.
+
+Run with:
+    gondola db seed example
+"""
+from typing import Any
+
+from db.seeds.base_seed import BaseSeed
+
+
+class ExampleSeed(BaseSeed):
+    """
+    Example seed — add your own model imports and records below.
+
+    This file is safe to delete once you've written your own seeds.
+    """
+
+    async def run(self, session: Any) -> None:
+        """Populate the database with example data."""
+
+        # ── Example usage ──────────────────────────────────────────────────
+        # 1. Import the model you want to seed:
+        #    from api.models.user import User
+        #
+        # 2. Create instances and add them to the session:
+        #    users = [
+        #        User(name="Alice", email="alice@example.com"),
+        #        User(name="Bob",   email="bob@example.com"),
+        #    ]
+        #    for user in users:
+        #        session.add(user)
+        #
+        # 3. Commit the transaction:
+        #    await session.commit()
+        # ──────────────────────────────────────────────────────────────────
+
+        print("ExampleSeed: no records to insert. Replace this with your own seed data.")

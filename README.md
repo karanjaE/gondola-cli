@@ -12,11 +12,11 @@ Gondola is a command-line tool designed to streamline FastAPI development by pro
 
 **Convention Over Configuration**: Gondola establishes sensible defaults and project structures so you can start building immediately. Opinionated where it matters, flexible where you need it.
 
-**Developer Happiness**: Reduce cognitive load with intuitive commands, clear project organization, and automatic test generation. If you've used Rails, you'll feel right at home.
+**Developer Happiness**: Reduce cognitive load with intuitive commands, clear project organization, and automatic test generation.
 
-**Modern Async-First**: Built for Python 3.11+ with async/await patterns throughout. Native support for SQLModel, PostgreSQL, Redis, and Celery.
+**Modern Async-First**: Built for Python 3.12+ with async/await patterns. The default PostgreSQL stack uses SQLModel, **asyncpg**, and Alembic.
 
-**Production Ready**: Generate projects with Docker, testing infrastructure, migrations, and deployment configurations included from day one.
+**Production Ready**: Optional Docker Compose (API, Postgres, Redis), pytest layout, and migrations from day one.
 
 ### Features
 
@@ -25,8 +25,7 @@ Gondola is a command-line tool designed to streamline FastAPI development by pro
 - **Database Management**: Built-in migration commands powered by Alembic
 - **Testing First**: Every generated component includes comprehensive tests
 - **Docker Ready**: Optional Docker and docker-compose configuration
-- **Multiple Database Support**: PostgreSQL (with PostGIS/pgvector), SQLite
-- **Background Jobs**: Celery integration for async task processing
+- **Multiple Database Support**: PostgreSQL (with PostGIS/pgvector), MySQL, MariaDB, SQLite
 - **Email Support**: Built-in mailer generator with templates
 - **Type Safe**: Full mypy support with Pydantic models
 - **Migration Rollback**: Reversible database migrations
@@ -36,41 +35,7 @@ Gondola is a command-line tool designed to streamline FastAPI development by pro
 
 ## Installation
 
-### Requirements
-
-- **Python**: 3.11 or higher
-- **Poetry**: 1.5+ (recommended) or pip
-- **Docker**: Optional, for containerized development
-
-### Installation Guide
-
-#### Install via pip
-
-```bash
-pip install gondola-cli
-```
-
-#### Install via pipx (recommended for CLI tools)
-
-```bash
-pipx install gondola-cli
-```
-
-#### Install from source
-
-```bash
-git clone https://github.com/karanjaE/gondola-cli.git
-cd gondola-cli
-poetry install
-```
-
-#### Verify installation
-
-```bash
-gondola --help
-```
-
-You should see the Gondola CLI help menu with available commands.
+Please refer to the [INSTALL.md](INSTALL.md) file for detailed installation instructions.
 
 ---
 
@@ -78,308 +43,440 @@ You should see the Gondola CLI help menu with available commands.
 
 ### Start a New Project
 
-Create a new FastAPI project with PostgreSQL and Docker:
+`gondola init` (alias: `gondola i`) launches an **interactive wizard** to scaffold a new FastAPI project.
 
 ```bash
-gondola create project my-api --db=postgresql --docker=true
+gondola init
+# or with alias
+gondola i
 ```
 
-Create a minimal project with SQLite:
+You can also pass a name directly to pre-fill the first prompt:
 
 ```bash
-gondola create project my-api --db=sqlite
+gondola init my-api
+gondola i my-api
+```
+
+#### Interactive session example
+
+```
+╭─────────────────────────────────────────────╮
+│  gondola init — FastAPI project scaffolding  │
+╰─────────────────────────────────────────────╯
+
+  Project name [my-fastapi-project]: my-api
+
+  Database engine
+  > 1. PostgreSQL  (asyncpg + SQLModel — recommended)
+    2. MySQL       (asyncmy + SQLModel)
+    3. MariaDB     (asyncmy + SQLModel)
+    4. SQLite      (aiosqlite + SQLModel)
+  Enter number [1]:
+
+  Include Docker setup? [Y/n]: Y
+
+  Include PostgreSQL extensions? (postgis, pgvector) [y/N]: y
+
+  Select extensions
+    1. postgis
+    2. pgvector
+  Enter numbers separated by commas (e.g. 1,2), or press Enter to skip
+  Selection: 2
+
+╭─ Project configuration ─╮
+│  Project     my-api      │
+│  Database    postgres    │
+│  Docker      Yes         │
+│  Extensions  pgvector    │
+╰─────────────────────────╯
+
+  Create project? [Y/n]: Y
+```
+
+#### Prompts and defaults
+
+| Prompt              | Default              |
+| ------------------- | -------------------- |
+| Project name        | `my-fastapi-project` |
+| Database engine     | `postgres`           |
+| Include Docker?     | `Yes`                |
+| Include extensions? | `No`                 |
+| Extensions          | _(none)_             |
+
+> **Note**: Project names are automatically normalized to `lowercase-with-hyphens`. Extensions (`postgis`, `pgvector`) are only applicable when using PostgreSQL.
+
+#### Non-interactive (scripted) usage
+
+All prompts can be bypassed by passing flags directly:
+
+```bash
+gondola init my-api --db postgres --docker --extensions pgvector
+gondola init my-api --db sqlite --no-docker
+gondola init my-api --db mysql
 ```
 
 #### What gets created?
 
 ```
 my-api/
-├── app/
-│   ├── models/           # Database models
-│   ├── routers/          # API endpoints
-│   ├── services/         # Business logic
-│   ├── mailers/          # Email templates
-│   └── core/             # Configuration
+├── api/
+│   ├── models/              # SQLModel tables
+│   ├── models/schemas/      # Pydantic schemas (per resource)
+│   ├── routers/             # Routers auto-included from *.py (export `router`)
+│   ├── services/
+│   ├── mailers/
+│   └── dependencies/
+├── core/                    # Settings (get_settings), database, logging
+├── db/
+│   ├── migrations/          # Alembic (script_location in alembic.ini)
+│   └── seeds/               # Database seed scripts
+│       ├── base_seed.py     # BaseSeed class
+│       └── example_seed.py  # Example seed file
 ├── test/
-│   ├── unit/             # Unit tests
-│   └── integration/      # Integration tests
-├── alembic/              # Database migrations
-├── docker-compose.yml    # Container orchestration
-├── Dockerfile            # App container
-└── pyproject.toml        # Dependencies
+│   ├── unit/
+│   │   ├── models/          # Model unit tests
+│   │   ├── services/        # Service unit tests
+│   │   └── mailers/         # Mailer unit tests
+│   └── integration/
+│       └── routers/         # Router integration tests
+├── alembic.ini
+├── docker-compose.yml       # Container orchestration (if --docker)
+├── Dockerfile               # App container (if --docker)
+└── pyproject.toml           # Dependencies
 ```
+
+A **fresh Git repository** is initialized in the project folder (`git init`).
 
 #### Next steps
 
 ```bash
 cd my-api
 poetry install
-cp env.example .env
 # Configure your .env file
-gondola migrate upgrade
-gondola run server
+gondola db init
+gondola start
 ```
 
 Your API is now running at `http://localhost:8000` with interactive docs at `/docs`.
+
+**API version header (PostgreSQL projects):** clients may send `API-Version: v1`. If the header is missing, the app uses the default from settings (`api_default_version`, usually `v1`). Versioning is header-based, not via URL prefixes.
+
+---
+
+### Starting the Server
+
+`gondola start` (alias: `gondola s`) starts the FastAPI server.
+
+```bash
+# Development mode (default)
+gondola start
+gondola s          # alias
+
+# Custom port and host
+gondola start --port 3000 --host 0.0.0.0
+gondola start -p 3000 -H 0.0.0.0
+
+# Enable hot-reload in development
+gondola start --reload
+gondola start -r
+
+# Production mode
+gondola start --env production
+gondola start -e prod
+
+# Production with multiple workers
+gondola start -e prod --workers 4
+gondola start -e prod -w 4
+```
+
+#### Options
+
+| Option      | Alias | Default           | Description                                              |
+| ----------- | ----- | ----------------- | -------------------------------------------------------- |
+| `--port`    | `-p`  | `$PORT` or `8000` | Port number                                              |
+| `--env`     | `-e`  | `development`     | Runtime mode: `dev`/`development` or `prod`/`production` |
+| `--reload`  | `-r`  | `false`           | Hot-reload on code changes (development only)            |
+| `--host`    | `-H`  | `127.0.0.1`       | Host address                                             |
+| `--workers` | `-w`  | `1`               | Number of workers (production only)                      |
+
+> **Note**: `--reload` is ignored in production mode. `--workers` is ignored in development mode.
 
 ---
 
 ### Generators
 
-Gondola provides powerful generators to scaffold your application components.
+`gondola generate` (alias: `gondola g`) generates code components. Run these from the **root of a generated project** (where `main.py` lives).
 
-#### Generate a Model
-
-Create a database model with fields, serializers, and tests:
+#### Generate a model
 
 ```bash
-gondola generate model User name:str email:str age:int is_active:bool
+gondola generate model User
+gondola g model User           # alias
 ```
 
 **Creates:**
-- `app/models/user.py` - SQLModel table definition
-- `app/models/serializers/user_serializer.py` - Pydantic schemas (Create, Update, Response)
-- `test/unit/test_user.py` - Unit tests
+
+- `api/models/user.py` — SQLModel table definition
+- `api/models/schemas/user.py` — Pydantic schemas (Create, Update, Response)
+- `test/unit/models/test_user.py` — Unit tests
 
 **Run migration:**
+
 ```bash
-gondola migrate create "Create User model"
-gondola migrate upgrade
+gondola generate migration "Create User model"
+gondola migrate up
 ```
 
-#### Generate a Router
-
-Create RESTful API endpoints:
+#### Generate a router
 
 ```bash
 gondola generate router users --model=User
+gondola g router users --model=User    # alias
 ```
 
 **Creates:**
-- `app/routers/users.py` - CRUD endpoints (list, create, get, update, delete)
-- `test/integration/test_users.py` - Integration tests
 
-**Register the router** in `main.py`:
-```python
-from app.routers import users
-app.include_router(users.router)
-```
+- `api/routers/users.py` — CRUD endpoints (list, create, get, update, delete)
+- `test/integration/routers/test_users_routes.py` — Integration tests
 
-#### Generate a Service
-
-Create a service class for business logic:
+#### Generate a service
 
 ```bash
 gondola generate service UserNotification
+gondola g service UserNotification     # alias
 ```
 
 **Creates:**
-- `app/services/user_notification.py` - Service class with Celery task decorator
-- `test/unit/test_user_notification.py` - Unit tests
 
-#### Generate a Mailer
+- `api/services/user_notification.py` — Service class
+- `test/unit/services/test_user_notification.py` — Unit tests
 
-Create an email mailer with templates:
+#### Generate a mailer
 
 ```bash
-gondola generate mailer WelcomeMailer
+gondola generate mailer Welcome
+gondola g mailer Welcome               # alias
 ```
 
 **Creates:**
-- `app/mailers/welcome_mailer.py` - Mailer class with SMTP configuration
-- `app/mailers/templates/welcome.html` - HTML email template
-- `test/unit/test_welcome_mailer.py` - Unit tests
+
+- `api/mailers/welcome.py` — Mailer class with template support
+- `test/unit/mailers/test_welcome.py` — Unit tests
+
+#### Generate a seed
+
+```bash
+gondola generate seed User
+gondola g seed User                    # alias
+```
+
+**Creates:**
+
+- `db/seeds/user_seed.py` — Seed class inheriting from `BaseSeed`
+
+---
+
+### Database Commands
+
+#### Initialize the database
+
+`gondola db init` is the one-stop command to get your database ready for the first time:
+
+```bash
+gondola db init
+```
+
+> **Prerequisites**: Run `poetry install` first — `gondola db init` uses the project's virtual environment to connect to the database (asyncpg, asyncmy, or aiosqlite must be installed).
+
+**Typical first-time workflow:**
+
+```bash
+cd my-api
+poetry install
+# Edit .env with your real database credentials
+gondola db init
+gondola start
+```
+
+#### Seed the database
+
+Run your database seed files to populate the database with initial data:
+
+```bash
+# Run all seeds in db/seeds/
+gondola db seed
+gondola db s                 # alias
+
+# Run a specific seed file (e.g. user_seed.py)
+gondola db seed user
+```
+
+#### Clear the database
+
+To quickly wipe all data without destroying the database completely, use `clear`. This runs `alembic downgrade base` and then `alembic upgrade head`.
+
+```bash
+gondola db clear
+# or
+gondola db c                 # alias
+```
+
+#### Destroy the database
+
+To completely drop all tables and delete the database itself, use `destroy`.
+
+```bash
+gondola db destroy
+# or
+gondola db d                 # alias
+```
 
 ---
 
 ### Migration Commands
 
-Gondola wraps Alembic for easy database migration management.
+`gondola migrate` wraps Alembic for easy database migration management.
 
 #### Create a migration
 
 ```bash
-gondola migrate create "Add user preferences table"
+gondola generate migration "Add user preferences table"
+# or
+gondola g migration "Add user preferences table"    # alias
 ```
 
 #### Apply migrations
 
 ```bash
-# Upgrade to latest
-gondola migrate upgrade
+# Upgrade to latest (head)
+gondola migrate up
 
-# Upgrade to specific revision
-gondola migrate upgrade abc123
+# Upgrade to a specific revision
+gondola migrate up --revision abc123
+# or
+gondola migrate up -r abc123
 ```
 
 #### Rollback migrations
 
 ```bash
-# Downgrade one revision
-gondola migrate downgrade -1
+# Roll back one revision
+gondola migrate down
 
-# Downgrade to specific revision
-gondola migrate downgrade abc123
+# Roll back to a specific revision
+gondola migrate down --revision abc123
+# or
+gondola migrate down -r abc123
 ```
 
 #### View migration history
 
 ```bash
 gondola migrate history
+# or
+gondola migrate h          # alias
 ```
 
 #### Check current revision
 
 ```bash
 gondola migrate current
+# or
+gondola migrate c          # alias
 ```
 
 ---
 
 ### Delete Commands
 
-Remove generated code safely with automatic cleanup.
+`gondola delete` (alias: `gondola d`) removes generated code safely with automatic cleanup.
 
 #### Delete a model
 
 ```bash
 gondola delete model User
+# or
+gondola d model User          # alias
 ```
 
 Gondola will:
-- List all related files (model, serializers, tests)
-- Check for foreign key dependencies
-- Identify the migration that created the table
-- Prompt for confirmation
-- Remove files and clean up imports
 
-⚠️ **Important**: You must manually rollback the migration:
+- List related files (`api/models/user.py`, `api/models/schemas/user.py`, `test/unit/models/test_user.py`)
+- Check for simple cross-model references
+- Try to point out a related migration revision
+- Prompt for confirmation unless `--force`
+
+⚠️ **Migrations**: roll back Alembic revisions yourself when appropriate:
+
 ```bash
-gondola migrate downgrade -1
+gondola migrate down
 ```
 
 #### Delete a router
 
 ```bash
 gondola delete router users
+# or
+gondola d router users        # alias
 ```
 
-Remember to remove the router registration from `main.py`.
+Removes `api/routers/users.py` and `test/integration/routers/test_users_routes.py`.
+
+#### Delete a service
+
+```bash
+gondola delete service UserNotification
+# or
+gondola d service UserNotification     # alias
+```
+
+Removes `api/services/user_notification.py` and `test/unit/services/test_user_notification.py`.
+
+#### Delete a mailer
+
+```bash
+gondola delete mailer Welcome
+# or
+gondola d mailer Welcome               # alias
+```
+
+Removes `api/mailers/welcome.py` and `test/unit/mailers/test_welcome.py`.
 
 ---
 
-### Server Commands
+## Command Reference
 
-Run your development server and background workers.
-
-#### Start the API server
-
-```bash
-# Development mode with auto-reload
-gondola run server
-
-# Custom port and host
-gondola run server --port=3000 --host=0.0.0.0
-
-# Production mode with multiple workers
-gondola run server --workers=4 --no-reload
-```
-
-#### Start Celery worker
-
-```bash
-gondola run celery-worker
-
-# With custom log level
-gondola run celery-worker --log-level=debug
-```
-
-#### Start Celery beat scheduler
-
-```bash
-gondola run celery-beat
-```
+| Command                                | Alias                           | Description                                                        |
+| -------------------------------------- | ------------------------------- | ------------------------------------------------------------------ |
+| `gondola init`                         | `gondola i`                     | Create a new FastAPI project (interactive wizard)                  |
+| `gondola start`                        | `gondola s`                     | Start the FastAPI server                                           |
+| `gondola db init`                      | `gondola db i`                  | Initialize DB: create it, enable extensions, run initial migration |
+| `gondola db seed [name]`               | `gondola db s [name]`           | Run one seed file, or all seeds if no name is given                |
+| `gondola db clear`                     | `gondola db c`                  | Drop all tables and recreate them (wipe data)                      |
+| `gondola db destroy`                   | `gondola db d`                  | Drop all tables and drop the database entirely                     |
+| `gondola generate model <name>`        | `gondola g model <name>`        | Generate model + schema + test                                     |
+| `gondola generate router <name>`       | `gondola g router <name>`       | Generate router + integration test                                 |
+| `gondola generate service <name>`      | `gondola g service <name>`      | Generate service + unit test                                       |
+| `gondola generate mailer <name>`       | `gondola g mailer <name>`       | Generate mailer + unit test                                        |
+| `gondola generate seed <name>`         | `gondola g seed <name>`         | Generate database seed file                                        |
+| `gondola generate migration <message>` | `gondola g migration <message>` | Create an Alembic migration                                        |
+| `gondola migrate up`                   | —                               | Apply migrations (to head)                                         |
+| `gondola migrate up -r <hash>`         | —                               | Apply migrations to a revision                                     |
+| `gondola migrate down`                 | —                               | Roll back one migration                                            |
+| `gondola migrate down -r <hash>`       | —                               | Roll back to a revision                                            |
+| `gondola migrate history`              | `gondola migrate h`             | Show migration history                                             |
+| `gondola migrate current`              | `gondola migrate c`             | Show current revision                                              |
+| `gondola delete model <name>`          | `gondola d model <name>`        | Delete model + schema + test                                       |
+| `gondola delete router <name>`         | `gondola d router <name>`       | Delete router + integration test                                   |
+| `gondola delete service <name>`        | `gondola d service <name>`      | Delete service + unit test                                         |
+| `gondola delete mailer <name>`         | `gondola d mailer <name>`       | Delete mailer + unit test                                          |
 
 ---
 
-## Development and Contributing
+## Development and contributing
 
-We welcome contributions! Here's how to get started.
-
-### Setup Development Environment
-
-```bash
-# Clone the repository
-git clone https://github.com/karanjaE/gondola-cli.git
-cd gondola-cli
-
-# Install dependencies
-poetry install
-
-# Install pre-commit hooks
-poetry run pre-commit install
-```
-
-### Running Tests
-
-```bash
-# Run all tests
-poetry run pytest
-
-# Run with coverage
-poetry run pytest --cov=gondola --cov-report=html
-
-# Run specific test file
-poetry run pytest tests/test_generators/test_model.py
-
-# Run with verbose output
-poetry run pytest -v
-```
-
-### Code Quality
-
-```bash
-# Type checking with mypy
-poetry run mypy gondola
-
-# Linting with ruff
-poetry run ruff check gondola
-
-# Format code
-poetry run ruff format gondola
-```
-
-### Contributing Guidelines
-
-1. **Fork the repository** and create a feature branch
-2. **Write tests** for new functionality
-3. **Ensure all tests pass** and maintain coverage above 80%
-4. **Follow code style** - run mypy and ruff before committing
-5. **Write clear commit messages** following conventional commits
-6. **Submit a pull request** with a description of changes
-
-### Development Workflow
-
-```bash
-# Create a feature branch
-git checkout -b feature/amazing-feature
-
-# Make your changes and write tests
-# ...
-
-# Run quality checks
-poetry run pytest
-poetry run mypy gondola
-poetry run ruff check gondola
-
-# Commit your changes
-git commit -m "feat: add amazing feature"
-
-# Push to your fork
-git push origin feature/amazing-feature
-
-# Open a pull request on GitHub
-```
+We welcome contributions! Please refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to set up your development environment, run tests, and submit pull requests.
 
 ---
 
@@ -398,7 +495,7 @@ Found a bug? We'd love to hear about it!
 Open an issue on [GitHub Issues](https://github.com/karanjaE/gondola-cli/issues) with:
 
 - **Clear title** describing the problem
-- **Gondola version**: Run `pip show gondola`
+- **Gondola / package**: `pip show gondola-cli` (or your install tool's equivalent)
 - **Python version**: Run `python --version`
 - **Operating system**: e.g., macOS 14.2, Ubuntu 22.04
 - **Steps to reproduce** the issue
@@ -406,9 +503,9 @@ Open an issue on [GitHub Issues](https://github.com/karanjaE/gondola-cli/issues)
 - **Error messages** or stack traces
 - **Code samples** or minimal reproduction
 
-### Security Vulnerabilities
+### Security vulnerabilities
 
-**Do not** open public issues for security vulnerabilities. Instead, email security@gondola.dev with details.
+Please use **GitHub private vulnerability reporting** for this repository (or contact the maintainers through a channel they publish on the repo) instead of filing public issues for undisclosed security problems.
 
 ---
 
@@ -424,7 +521,7 @@ See [LICENSE](LICENSE) file for full text.
 
 ### Our Pledge
 
-Just be nice. 
+Just be nice.
 
 ### Our Standards
 
@@ -447,7 +544,7 @@ Just be nice.
 
 Project maintainers are responsible for clarifying standards and will take appropriate and fair corrective action in response to unacceptable behavior.
 
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported by contacting the project team at conduct@gondola.dev. All complaints will be reviewed and investigated promptly and fairly.
+Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the maintainers via **GitHub Issues** or **Discussions** on this repository.
 
 ### Attribution
 
@@ -468,11 +565,9 @@ Special thanks to all our [contributors](https://github.com/karanjaE/gondola-cli
 
 ## Links
 
-- **Documentation**: [https://gondola.dev/docs](https://gondola.dev/docs)
-- **PyPI**: [https://pypi.org/project/gondola](https://pypi.org/project/gondola)
+- **PyPI**: [https://pypi.org/project/gondola-cli/](https://pypi.org/project/gondola-cli/)
 - **GitHub**: [https://github.com/karanjaE/gondola-cli](https://github.com/karanjaE/gondola-cli)
 - **Discussions**: [https://github.com/karanjaE/gondola-cli/discussions](https://github.com/karanjaE/gondola-cli/discussions)
-- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
