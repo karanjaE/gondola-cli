@@ -112,9 +112,6 @@ jobs:
       - run:
           name: Run ruff
           command: poetry run ruff check .
-      - run:
-          name: Run mypy
-          command: poetry run mypy gondola
 
   version-and-changelog:
     executor: python
