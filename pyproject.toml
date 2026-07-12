@@ -42,7 +42,9 @@ target-version = "py312"
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "0.1.1"
-version_files = ["pyproject.toml:version"]
+version_files = [
+    "pyproject.toml:version",
+]
 tag_format = "v$version"
 update_changelog_on_bump = true
 major_version_zero = true

@@ -25,7 +25,7 @@ version: 2.1
 executors:
   python:
     docker:
-      - image: cimg/python:3.14 # matches the version in the old GHA workflow
+      - image: cimg/python:3.12 # matches `python = "^3.12"` in pyproject.toml
     working_directory: ~/project
 
 commands:
@@ -95,6 +95,9 @@ jobs:
       - attach_workspace:
           at: /tmp/workspace
       - poetry_install
+      - run:
+          name: Run ruff
+          command: poetry run ruff check .
       - run:
           name: Run mypy
           command: poetry run mypy gondola
