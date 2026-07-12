@@ -1,0 +1,27 @@
+"""
+Base class for all database seed files.
+
+All seed files should inherit from BaseSeed and implement the `run` method.
+"""
+from typing import Any
+
+
+class BaseSeed:
+    """Base class for all seed files.
+
+    Usage:
+        class MyModelSeed(BaseSeed):
+            async def run(self, session: Any) -> None:
+                session.add(MyModel(name="Example"))
+                await session.commit()
+    """
+
+    async def run(self, session: Any) -> None:
+        """Run the seed. Override this in your seed class.
+
+        Args:
+            session: An active async SQLAlchemy / SQLModel database session.
+        """
+        raise NotImplementedError(
+            f"{self.__class__.__name__} must implement the run() method."
+        )

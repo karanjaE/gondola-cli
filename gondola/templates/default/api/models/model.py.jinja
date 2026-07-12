@@ -1,0 +1,16 @@
+from sqlmodel import Field
+
+from api.models.base_model import BaseModel
+
+
+class {{ model_name }}(BaseModel, table=True):
+    """{{ model_name }} table."""
+
+    __tablename__ = "{{ file_name }}s"
+
+    {% for field_name, field_type in fields %}
+    {{ field_name }}: {% if field_type == "str" %}str{% elif field_type == "int" %}int{% elif field_type == "float" %}float{% elif field_type == "bool" %}bool{% else %}{{ field_type }}{% endif %} = Field(...)
+    {% endfor %}
+    {% if not fields %}
+    # Add your fields here
+    {% endif %}

@@ -1,0 +1,46 @@
+# {{ project_name }}
+
+HTTP API service generated with Gondola CLI.
+
+## Prerequisites
+
+- Python 3.12+
+- Poetry
+- PostgreSQL (async access via asyncpg; Alembic uses a sync connection)
+
+## Setup
+
+```bash
+poetry install
+cp .env.example .env
+# Edit .env with your DATABASE_URL and other settings
+gondola migrate upgrade
+gondola run server
+```
+
+Open `http://localhost:8000/docs` for interactive API documentation.
+
+Optional: send `API-Version: v1` on requests; if omitted, the app defaults to **v1**.
+
+## Layout
+
+```
+.
+├── api/                 # HTTP layer (routers, models, schemas, services)
+│   ├── models/
+│   │   └── schemas/     # Pydantic schemas per resource
+│   └── routers/
+├── core/                # Settings, database, logging
+├── db/migrations/       # Alembic
+└── test/                # Pytest
+```
+
+## Tests
+
+```bash
+pytest
+```
+
+## License
+
+MIT

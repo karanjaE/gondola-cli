@@ -1,0 +1,16 @@
+"""{{ seed_name }} seed — populate {{ seed_name }} data."""
+from typing import Any
+
+from db.seeds.base_seed import BaseSeed
+
+
+class {{ seed_class }}(BaseSeed):
+    """Seed for {{ seed_name }} data."""
+
+    async def run(self, session: Any) -> None:
+        """Add {{ seed_name }} seed data to the database."""
+        # TODO: add your seed records here, e.g.:
+        # from api.models.{{ file_name }} import {{ seed_name }}
+        # session.add({{ seed_name }}(...))
+        # await session.commit()
+        pass
