@@ -49,7 +49,7 @@ class TestRouterGenerator:
                 os.chdir(tmpdir)
                 # Create required directories
                 (Path(tmpdir) / "app" / "routers").mkdir(parents=True)
-                (Path(tmpdir) / "test" / "integration").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "integration" / "routers").mkdir(parents=True)
                 
                 generator = RouterGenerator("User")
                 generator.generate()
@@ -59,7 +59,7 @@ class TestRouterGenerator:
                 assert router_file.exists()
                 
                 # Check test file
-                test_file = Path(tmpdir) / "test" / "integration" / "test_user_routes.py"
+                test_file = Path(tmpdir) / "test" / "integration" / "routers" / "test_user_routes.py"
                 assert test_file.exists()
             finally:
                 os.chdir(original_cwd)
@@ -95,12 +95,12 @@ class TestRouterGenerator:
                 os.chdir(tmpdir)
                 # Create required directories
                 (Path(tmpdir) / "app" / "routers").mkdir(parents=True)
-                (Path(tmpdir) / "test" / "integration").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "integration" / "routers").mkdir(parents=True)
                 
                 generator = RouterGenerator("User")
                 generator.generate()
                 
-                test_file = Path(tmpdir) / "test" / "integration" / "test_user_routes.py"
+                test_file = Path(tmpdir) / "test" / "integration" / "routers" / "test_user_routes.py"
                 assert test_file.exists()
                 content = test_file.read_text()
                 assert "User" in content

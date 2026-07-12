@@ -35,7 +35,7 @@ class TestServiceGenerator:
                 os.chdir(tmpdir)
                 # Create required directories
                 (Path(tmpdir) / "app" / "services").mkdir(parents=True)
-                (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "unit" / "services").mkdir(parents=True)
                 
                 generator = ServiceGenerator("EmailService")
                 generator.generate()
@@ -45,7 +45,7 @@ class TestServiceGenerator:
                 assert service_file.exists()
                 
                 # Check test file
-                test_file = Path(tmpdir) / "test" / "unit" / "test_email_service.py"
+                test_file = Path(tmpdir) / "test" / "unit" / "services" / "test_email_service.py"
                 assert test_file.exists()
             finally:
                 os.chdir(original_cwd)
@@ -78,12 +78,12 @@ class TestServiceGenerator:
                 os.chdir(tmpdir)
                 # Create required directories
                 (Path(tmpdir) / "app" / "services").mkdir(parents=True)
-                (Path(tmpdir) / "test" / "unit").mkdir(parents=True)
+                (Path(tmpdir) / "test" / "unit" / "services").mkdir(parents=True)
                 
                 generator = ServiceGenerator("EmailService")
                 generator.generate()
                 
-                test_file = Path(tmpdir) / "test" / "unit" / "test_email_service.py"
+                test_file = Path(tmpdir) / "test" / "unit" / "services" / "test_email_service.py"
                 assert test_file.exists()
                 content = test_file.read_text()
                 assert "Emailservice" in content
