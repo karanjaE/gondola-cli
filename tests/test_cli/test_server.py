@@ -30,7 +30,7 @@ def test_server_not_in_project(tmp_project):
     original_cwd = os.getcwd()
     try:
         os.chdir("/tmp")
-        result = runner.invoke(app, ["run", "server"])
+        result = runner.invoke(app, ["start"])
         assert result.exit_code == 1
         assert "main.py not found" in result.stdout
     finally:
@@ -38,29 +38,35 @@ def test_server_not_in_project(tmp_project):
 
 
 @patch("gondola.cli.server.subprocess.run")
-def test_server_success(mock_subprocess, tmp_project):
+@patch("gondola.cli.server._fastapi_runner")
+def test_server_success(mock_subprocess, mock_runner, tmp_project):
     """Test successful server start."""
     original_cwd = os.getcwd()
+    mock_runner.return_value = ["fastapi"]
     mock_subprocess.return_value = MagicMock(returncode=0)
     try:
         os.chdir(tmp_project)
-        result = runner.invoke(app, ["run", "server", "--port", "8080"])
-        assert "Starting server" in result.stdout or result.exit_code == 0
+        result = runner.invoke(app, ["start", "--port", "8080"])
+        assert result.exit_code == 0
+        assert "Starting FastAPI server" in result.stdout
     finally:
         os.chdir(original_cwd)
 
 
 @patch("gondola.cli.server.subprocess.run")
-def test_server_with_options(mock_subprocess, tmp_project):
+@patch("gondola.cli.server._fastapi_runner")
+def test_server_with_options(mock_subprocess, mock_runner, tmp_project):
     """Test server with various options."""
     original_cwd = os.getcwd()
+    mock_runner.return_value = ["fastapi"]
     mock_subprocess.return_value = MagicMock(returncode=0)
     try:
         os.chdir(tmp_project)
         result = runner.invoke(
             app,
-            ["run", "server", "--host", "127.0.0.1", "--port", "9000", "--no-reload", "--workers", "2"],
+            ["start", "--host", "127.0.0.1", "--port", "9000", "--no-reload", "--workers", "2"],
         )
-        assert result.exit_code == 0 or "Starting server" in result.stdout
+        assert result.exit_code == 0
+        assert "Starting FastAPI server" in result.stdout
     finally:
         os.chdir(original_cwd)
