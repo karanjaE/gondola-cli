@@ -29,12 +29,12 @@ def tmp_project():
             os.chdir(original_cwd)
 
 
-def test_migrate_create_not_in_project(tmp_project):
-    """Test migrate create fails when not in a FastAPI project."""
+def test_migrate_up_not_in_project(tmp_project):
+    """Test migrate up fails when not in a FastAPI project."""
     original_cwd = os.getcwd()
     try:
         os.chdir("/tmp")
-        result = runner.invoke(app, ["migrate", "create", "test migration"])
+        result = runner.invoke(app, ["migrate", "up"])
         assert result.exit_code == 1
         assert "Not in a FastAPI project with Alembic" in result.stdout
     finally:
@@ -42,55 +42,13 @@ def test_migrate_create_not_in_project(tmp_project):
 
 
 @patch("gondola.cli.migrate.subprocess.run")
-def test_migrate_create_success(mock_subprocess, tmp_project):
-    """Test successful migration creation."""
-    original_cwd = os.getcwd()
-    mock_subprocess.return_value = MagicMock(returncode=0)
-    try:
-        os.chdir(tmp_project)
-        result = runner.invoke(app, ["migrate", "create", "test migration"])
-        assert result.exit_code == 0
-        mock_subprocess.assert_called_once()
-        assert "Migration created: test migration" in result.stdout
-    finally:
-        os.chdir(original_cwd)
-
-
-@patch("gondola.cli.migrate.subprocess.run")
-def test_migrate_create_failure(mock_subprocess, tmp_project):
-    """Test migration creation failure."""
-    original_cwd = os.getcwd()
-    from subprocess import CalledProcessError
-    mock_subprocess.side_effect = CalledProcessError(1, "alembic")
-    try:
-        os.chdir(tmp_project)
-        result = runner.invoke(app, ["migrate", "create", "test migration"])
-        # Should handle the error gracefully
-        assert result.exit_code == 1
-    finally:
-        os.chdir(original_cwd)
-
-
-def test_migrate_upgrade_not_in_project(tmp_project):
-    """Test migrate upgrade fails when not in a FastAPI project."""
-    original_cwd = os.getcwd()
-    try:
-        os.chdir("/tmp")
-        result = runner.invoke(app, ["migrate", "upgrade"])
-        assert result.exit_code == 1
-        assert "Not in a FastAPI project with Alembic" in result.stdout
-    finally:
-        os.chdir(original_cwd)
-
-
-@patch("gondola.cli.migrate.subprocess.run")
-def test_migrate_upgrade_success(mock_subprocess, tmp_project):
+def test_migrate_up_success(mock_subprocess, tmp_project):
     """Test successful migration upgrade."""
     original_cwd = os.getcwd()
     mock_subprocess.return_value = MagicMock(returncode=0)
     try:
         os.chdir(tmp_project)
-        result = runner.invoke(app, ["migrate", "upgrade", "head"])
+        result = runner.invoke(app, ["migrate", "up", "-r", "head"])
         assert result.exit_code == 0
         mock_subprocess.assert_called_once()
         assert "Migrations applied successfully" in result.stdout
@@ -98,12 +56,12 @@ def test_migrate_upgrade_success(mock_subprocess, tmp_project):
         os.chdir(original_cwd)
 
 
-def test_migrate_downgrade_not_in_project(tmp_project):
-    """Test migrate downgrade fails when not in a FastAPI project."""
+def test_migrate_down_not_in_project(tmp_project):
+    """Test migrate down fails when not in a FastAPI project."""
     original_cwd = os.getcwd()
     try:
         os.chdir("/tmp")
-        result = runner.invoke(app, ["migrate", "downgrade"])
+        result = runner.invoke(app, ["migrate", "down"])
         assert result.exit_code == 1
         assert "Not in a FastAPI project with Alembic" in result.stdout
     finally:
@@ -111,14 +69,15 @@ def test_migrate_downgrade_not_in_project(tmp_project):
 
 
 @patch("gondola.cli.migrate.subprocess.run")
-def test_migrate_downgrade_success(mock_subprocess, tmp_project):
+def test_migrate_down_success(mock_subprocess, tmp_project):
     """Test successful migration downgrade."""
     original_cwd = os.getcwd()
     mock_subprocess.return_value = MagicMock(returncode=0)
     try:
         os.chdir(tmp_project)
-        # Use "head" or a specific revision instead of "-1" which might be parsed as an option
-        result = runner.invoke(app, ["migrate", "downgrade", "head"])
+        # Use "-r head" or a specific revision instead of a bare positional,
+        # which is no longer accepted (revision is now an option).
+        result = runner.invoke(app, ["migrate", "down", "-r", "head"])
         assert result.exit_code == 0
         mock_subprocess.assert_called_once()
         assert "Migration rolled back successfully" in result.stdout
